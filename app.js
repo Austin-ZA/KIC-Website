@@ -51,8 +51,27 @@ async function idbSet(data) {
   } catch { return false; }
 }
 
-// ─── Read: IndexedDB first, fall back to localStorage ─────────────────────────
+// ─── Read: remote data.json → IndexedDB → localStorage ───────────────────────
+async function fetchRemoteData() {
+  try {
+    const res = await fetch('data.json?v=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return null;
+    const json = await res.json();
+    // If remote data exists, sync it into IndexedDB + localStorage so it's available offline
+    if (json && typeof json === 'object' && Object.keys(json).length > 0) {
+      await idbSet(json);
+      try { localStorage.setItem(LS_KEY, JSON.stringify(json)); localStorage.setItem(LS_UPDATED, String(Date.now())); } catch {}
+      return json;
+    }
+    return null;
+  } catch { return null; }
+}
+
 async function loadPersistedData() {
+  // Try remote first (makes all devices see the same published content)
+  const remote = await fetchRemoteData();
+  if (remote) return remote;
+  // Fall back to local IndexedDB
   let data = await idbGet();
   if (!data) {
     try { data = JSON.parse(localStorage.getItem(LS_KEY)) || null; } catch { data = null; }

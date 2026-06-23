@@ -1,0 +1,210 @@
+{
+  "announcements": [
+    {
+      "title": "Kingdom Conference Launch",
+      "body": "Join the church family for a week of worship, teaching and fellowship. Doors open at 08:30 Sunday.",
+      "category": "Service",
+      "date": "This week",
+      "image": ""
+    },
+    {
+      "title": "New Member Celebration",
+      "body": "Welcome the newest members into our community of impact, prayer and purpose.",
+      "category": "Membership",
+      "date": "Tuesday",
+      "image": ""
+    },
+    {
+      "title": "Baptism Class",
+      "body": "Register for the baptism class for all who are ready to take the next step in faith.",
+      "category": "Baptism",
+      "date": "Wednesday",
+      "image": ""
+    },
+    {
+      "title": "Newsletter Release",
+      "body": "Our weekly newsletter is now available with service highlights and upcoming event details.",
+      "category": "Newsletter",
+      "date": "Thursday",
+      "image": ""
+    }
+  ],
+  "sermons": [
+    {
+      "title": "The Cost Of Carrying God",
+      "speaker": "Pastor T.G NDALA",
+      "description": "A series on the Cost Of Carrying God.",
+      "link": "https://youtube.com/playlist?list=PLfh5vmVGxEVfc7E47Qth1FO4Cb1OFdrRy&si=RgV3JLRr34nP2l_1"
+    },
+    {
+      "title": "Impactors Sunday",
+      "speaker": "Apostle Bopape & Apostle Mahlaku",
+      "description": "A powerful teaching for believers who are called to shift atmosphere and culture.",
+      "link": "https://youtube.com/live/p8wXJE_Y558?si=S4QlyyzamnBL5wYT"
+    },
+    {
+      "title": "The Spirit Of Revival",
+      "speaker": "Pastor T.G NDALA",
+      "description": "A series on the Spirit of Revival.",
+      "link": "https://youtube.com/playlist?list=PLfh5vmVGxEVca6jdqMjgWA-1qTBGJ_vxA&si=65dMgS8k1kZD8iDS"
+    }
+  ],
+  "contact": {
+    "address": "336 Struben, Pretoria Central",
+    "phone": "+27 634 859 461",
+    "email": "KingdomImpactorsChurch@gmail.com",
+    "times": "Sun 08:30 intercession, 09:30-12:00 service; Tue 17:30 intercession, 18:00 Choose Word.",
+    "whatsapp": "+27634859461",
+    "pastor": "T.G NDALA"
+  },
+  "countdown": {
+    "label": "Night of Strength",
+    "date": "2026-07-31T18:00:00"
+  },
+  "songs": [],
+  "events": [
+    {
+      "title": "Sunday Celebration Service",
+      "date": "Sunday",
+      "time": "09:30",
+      "location": "336 Struben, Pretoria Central",
+      "description": "Join us for worship and the Word every Sunday morning."
+    },
+    {
+      "title": "Choose Word Service",
+      "date": "Tuesday",
+      "time": "18:00",
+      "location": "336 Struben, Pretoria Central",
+      "description": "A powerful midweek service for deeper word alignment."
+    }
+  ],
+  "gallery": [],
+  "structures": [
+    {
+      "name": "Visionary Leaders",
+      "image": "",
+      "members": [
+        {
+          "name": "Pastor T.G NDALA",
+          "role": "Lead Pastor"
+        },
+        {
+          "name": "Elder Mary",
+          "role": "Assistant Pastor"
+        }
+      ]
+    },
+    {
+      "name": "Ministers",
+      "image": "",
+      "members": [
+        {
+          "name": "Sis Joy",
+          "role": "Minister"
+        },
+        {
+          "name": "Bro Mike",
+          "role": "Minister"
+        }
+      ]
+    },
+    {
+      "name": "Executive Team",
+      "image": "",
+      "members": [
+        {
+          "name": "Steve",
+          "role": "Operations"
+        },
+        {
+          "name": "June",
+          "role": "Finance"
+        }
+      ]
+    },
+    {
+      "name": "Media Team",
+      "image": "",
+      "members": [
+        {
+          "name": "Tebo",
+          "role": "Production"
+        },
+        {
+          "name": "Zandi",
+          "role": "Social Media"
+        }
+      ]
+    },
+    {
+      "name": "Worship Team",
+      "image": "WorshipTeam.jpeg",
+      "members": [
+        {
+          "name": "Pastor Gift",
+          "role": "Worship Leader"
+        },
+        {
+          "name": "Choir",
+          "role": "Vocal Team"
+        }
+      ]
+    },
+    {
+      "name": "Ushers",
+      "image": "",
+      "members": [
+        {
+          "name": "Samuel",
+          "role": "Head Usher"
+        },
+        {
+          "name": "Leah",
+          "role": "Usher"
+        }
+      ]
+    },
+    {
+      "name": "Intercessors",
+      "image": "",
+      "members": [
+        {
+          "name": "Nandi",
+          "role": "Head Intercessor"
+        },
+        {
+          "name": "Moses",
+          "role": "Intercessor"
+        }
+      ]
+    }
+  ],
+  "calendar": {
+    "month": "",
+    "events": []
+  },
+  "giving": {
+    "tithe": {
+      "bank": "Kingdom Impact Bank",
+      "account": "1234567890"
+    },
+    "offering": {
+      "bank": "Kingdom Impact Bank",
+      "account": "0987654321"
+    }
+  },
+  "services": {
+    "chooseWord": [
+      {
+        "title": "Midweek Activation",
+        "description": "A prophetic word service designed to activate the church family."
+      }
+    ],
+    "sunday": [
+      {
+        "title": "Sunday Word",
+        "description": "A powerful church service for worship, word and community."
+      }
+    ]
+  }
+}

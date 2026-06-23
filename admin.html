@@ -264,6 +264,38 @@
             <strong style="color:var(--yellow);">Images</strong> uploaded in the admin are stored as base64 directly in the database — no hosting needed.
           </p>
         </div>
+
+        <div class="admin-card" style="border-color:rgba(245,200,66,0.35);">
+          <h3>🌐 Publish to All Devices</h3>
+          <p class="note" style="margin-bottom:1.25rem;">
+            Because this site has no backend, content saved here only lives on <em>this device</em>. 
+            To make changes visible on phones and other devices, export your data and upload it to GitHub.
+          </p>
+
+          <div style="display:grid;gap:1rem;">
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1.25rem;">
+              <strong style="color:var(--yellow);display:block;margin-bottom:0.4rem;">Step 1 — Export</strong>
+              <p class="note" style="margin-bottom:0.85rem;">Download your current site content as <code>data.json</code>.</p>
+              <button class="btn-save" onclick="exportData()" style="width:100%;">⬇ Export data.json</button>
+            </div>
+
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1.25rem;">
+              <strong style="color:var(--yellow);display:block;margin-bottom:0.4rem;">Step 2 — Upload to GitHub</strong>
+              <p class="note" style="margin-bottom:0.85rem;">
+                Go to your GitHub repo → click <strong>Add file → Upload files</strong> → drag in the <code>data.json</code> file → 
+                click <strong>Commit changes</strong>. Netlify will auto-redeploy in ~30 seconds.
+              </p>
+              <a href="https://github.com/Austin-ZA/KIC-Website" target="_blank" class="btn-save" style="display:block;text-align:center;background:rgba(255,255,255,0.08);color:var(--text);">Open GitHub Repo ↗</a>
+            </div>
+
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1.25rem;">
+              <strong style="color:var(--yellow);display:block;margin-bottom:0.4rem;">Import (restore from file)</strong>
+              <p class="note" style="margin-bottom:0.85rem;">Load a previously exported <code>data.json</code> into this device's local storage.</p>
+              <input type="file" id="importFile" accept=".json" style="margin-bottom:0.75rem;" />
+              <button class="btn-save" onclick="importData()" style="width:100%;background:rgba(255,255,255,0.08);color:var(--text);">⬆ Import data.json</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ANNOUNCEMENTS -->
@@ -363,7 +395,9 @@
           <label class="field-label">Event Title *</label>
           <input type="text" id="calTitle" placeholder="Sunday Celebration Service"/>
           <label class="field-label">Day / Date</label>
-          <input type="text" id="calDay" placeholder="Sunday or 15 July 2026"/>
+          <input type="date" id="calDay" />
+          <small style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-top:0.25rem;display:block;">For a specific date use the picker above. For a recurring weekly event, clear the date and type the day name below (e.g. Sunday).</small>
+          <input type="text" id="calDayRecurring" placeholder="e.g. Sunday (for weekly recurring)" style="margin-top:0.5rem;"/>
           <label class="field-label">Time</label>
           <input type="time" id="calTime"/>
           <label class="field-label">Location</label>
@@ -730,9 +764,13 @@
     const d = await window.KIC.getSiteData();
     d.calendar = d.calendar || { month:'', events:[] };
     d.calendar.month = document.getElementById('calMonth').value.trim() || d.calendar.month;
-    d.calendar.events.push({ title, date: document.getElementById('calDay').value.trim(), time: document.getElementById('calTime').value, location: document.getElementById('calLocation').value.trim(), description: document.getElementById('calDesc').value.trim() });
+    const calDateVal = document.getElementById('calDay').value.trim();
+    const calRecurVal = (document.getElementById('calDayRecurring')?.value || '').trim();
+    const calDateFinal = calDateVal || calRecurVal;
+    if (!calDateFinal) { alert('Please enter a date or a recurring day name.'); return; }
+    d.calendar.events.push({ title, date: calDateFinal, time: document.getElementById('calTime').value, location: document.getElementById('calLocation').value.trim(), description: document.getElementById('calDesc').value.trim() });
     await window.KIC.setSiteData(d);
-    ['calTitle','calDay','calLocation','calDesc'].forEach(id => document.getElementById(id).value = '');
+    ['calTitle','calDay','calDayRecurring','calLocation','calDesc'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     document.getElementById('calTime').value = '';
     toast('✓ Event saved permanently');
     renderCalList(d);
@@ -836,6 +874,32 @@
   }
 
   function esc(s) { return String(s).replace(/"/g,'&quot;'); }
+
+  // ── EXPORT ──
+  async function exportData() {
+    const d = await window.KIC.getSiteData();
+    const json = JSON.stringify(d, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'data.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('✓ data.json exported — now upload it to GitHub');
+  }
+
+  // ── IMPORT ──
+  async function importData() {
+    const file = document.getElementById('importFile').files[0];
+    if (!file) { toast('⚠ Please choose a data.json file first'); return; }
+    const text = await file.text();
+    let parsed;
+    try { parsed = JSON.parse(text); } catch { toast('✗ Invalid JSON file'); return; }
+    await window.KIC.setSiteData(parsed);
+    toast('✓ Data imported — all content restored');
+    location.reload();
+  }
 </script>
 </body>
 </html>
