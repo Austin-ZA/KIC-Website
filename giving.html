@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Giving - KIC</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="page-shell">
+  <header class="page-header">
+    <a href="Home.html" style="color:var(--yellow);font-weight:800;">← Home</a>
+    <h1>Giving</h1>
+  </header>
+  <main class="page-main">
+    <div class="page-card">
+      <div id="givingContainer"></div>
+    </div>
+  </main>
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const data = await window.KIC.getSiteData();
+      const giving = data.giving || {};
+      const container = document.getElementById('givingContainer');
+      container.innerHTML = `
+        <div style="padding:1rem;border-radius:12px;background:rgba(255,255,255,0.03)">
+          <h2 style="color:var(--yellow)">Tithe</h2>
+          <p style="color:rgba(255,255,255,0.78)">Bank: ${giving.tithe?.bank || ''}<br/>Account: ${giving.tithe?.account || ''}</p>
+        </div>
+        <div style="padding:1rem;border-radius:12px;background:rgba(255,255,255,0.03);margin-top:1rem;">
+          <h2 style="color:var(--yellow)">Offering</h2>
+          <p style="color:rgba(255,255,255,0.78)">Bank: ${giving.offering?.bank || ''}<br/>Account: ${giving.offering?.account || ''}</p>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>

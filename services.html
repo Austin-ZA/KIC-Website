@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Church Services - KIC</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="page-shell">
+  <header class="page-header">
+    <a href="Home.html" style="color:var(--yellow);font-weight:800;">← Home</a>
+    <h1>Church Services</h1>
+  </header>
+  <main class="page-main">
+    <div class="page-card">
+      <div id="servicesContainer"></div>
+    </div>
+  </main>
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const data = await window.KIC.getSiteData();
+      const container = document.getElementById('servicesContainer');
+      const chooseWord = data.services?.chooseWord || [];
+      const sunday = data.services?.sunday || [];
+      container.innerHTML = `
+        <section style="margin-bottom:1rem;"><h2 style="color:var(--yellow)">Choose-Word</h2>${chooseWord.map(s=>`<div style="padding:0.6rem;border-radius:8px;background:rgba(255,255,255,0.03);margin:0.45rem 0;"><strong>${s.title}</strong><div style="color:rgba(255,255,255,0.78)">${s.description}</div></div>`).join('')||'<p>No Choose-Word items.'}</section>
+        <section><h2 style="color:var(--yellow)">Sunday Services</h2>${sunday.map(s=>`<div style="padding:0.6rem;border-radius:8px;background:rgba(255,255,255,0.03);margin:0.45rem 0;"><strong>${s.title}</strong><div style="color:rgba(255,255,255,0.78)">${s.description}</div></div>`).join('')||'<p>No Sunday services.'}</section>
+      `;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,415 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kingdom Impactors Church</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#F5C842" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050505;
+      --surface: #0f0f11;
+      --surface-2: #141417;
+      --text: #f7f5f0;
+      --muted: #c4c4c4;
+      --yellow: #f5c842;
+      --accent: #ffb923;
+      --border: rgba(255, 255, 255, 0.08);
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, rgba(245, 200, 66, 0.11), transparent 30%), #050505;
+      line-height: 1.65;
+    }
+
+    button, input, textarea { font: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    .site-shell { display: flex; flex-direction: column; min-height: 100vh; }
+    header { position: fixed; inset: 0 0 auto; z-index: 100; background: rgba(8, 8, 8, 0.92); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; max-width: 1180px; margin: 0 auto; padding: 1rem 1.25rem; }
+    .brand { display: flex; align-items: center; gap: 0.9rem; }
+    .brand-logo { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: rgba(245, 200, 66, 0.16); color: var(--yellow); font-weight: 800; border: 2px solid var(--yellow); }
+    .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+    .brand-text strong { font-family: 'Syne', sans-serif; font-size: 1rem; letter-spacing: -0.03em; }
+    .brand-text span { font-size: 0.68rem; color: var(--yellow); text-transform: uppercase; letter-spacing: 0.22em; }
+    .nav-bar { display: flex; align-items: center; gap: 1rem; }
+    .nav-links { display: flex; gap: 1.2rem; align-items: center; }
+    .nav-links a { color: rgba(255, 255, 255, 0.74); font-size: 0.9rem; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--yellow); }
+    .nav-button { display: inline-flex; align-items: center; justify-content: center; padding: 0.85rem 1.35rem; border-radius: 999px; border: 1px solid transparent; background: var(--yellow); color: #111; font-weight: 700; transition: transform 0.2s, background 0.2s; }
+    .nav-button:hover { background: #fff3b8; }
+    .search-wrapper { position: relative; min-width: 280px; max-width: 360px; }
+    .search-wrapper input { width: 100%; padding: 0.95rem 1rem 0.95rem 3.35rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.05); color: var(--text); outline: none; }
+    .search-wrapper .search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--yellow); }
+    .nav-toggle { display: inline-flex; width: 46px; height: 46px; border-radius: 50%; border: none; background: rgba(255, 255, 255, 0.08); color: var(--text); cursor: pointer; align-items: center; justify-content: center; }
+    .hamburger-close { position: absolute; top: 1rem; right: 1rem; width: 42px; height: 42px; border-radius: 50%; border: none; background: rgba(255,255,255,0.08); color: var(--text); cursor: pointer; font-size: 1.2rem; }
+    .mobile-menu { display: none; position: fixed; top: 0; right: 0; bottom: 0; width: min(100%, 420px); max-width: 100%; background: rgba(8, 8, 8, 0.98); box-shadow: -24px 0 60px rgba(0, 0, 0, 0.45); padding: 2rem 1.5rem 1.5rem; overflow: hidden; z-index: 150; transform: translateX(100%); transition: transform 0.28s ease-in-out; }
+    .mobile-menu.active { display: block; transform: translateX(0); }
+    .hamburger-tabs { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
+    .hamburger-tabs button { width: 100%; text-align: left; padding: 0.95rem 1rem; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04); color: var(--text); font-weight: 700; cursor: pointer; }
+    .hamburger-tabs button.active { background: rgba(245, 200, 66, 0.18); color: var(--yellow); border-color: rgba(245, 200, 66, 0.3); }
+    .hamburger-panel { display: grid; gap: 1.5rem; }
+    .hamburger-panel-section { display: block; }
+    .structures-nav { display: grid; gap: 0.75rem; }
+    .structures-nav button { width: 100%; padding: 0.85rem 1rem; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; background: rgba(255, 255, 255, 0.04); color: var(--text); text-align: left; cursor: pointer; }
+    .structures-nav button.active { background: rgba(245, 200, 66, 0.18); color: var(--yellow); border-color: rgba(245, 200, 66, 0.3); }
+    .structure-detail { display: grid; gap: 1rem; padding: 1rem; border-radius: 24px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.12); }
+    .structure-detail img { width: 100%; border-radius: 18px; max-height: 260px; object-fit: cover; }
+    .members-grid { display: grid; gap: 0.9rem; margin-top: 0.5rem; }
+    .member-card { display: grid; grid-template-columns: 76px 1fr; gap: 0.9rem; padding: 0.85rem; border-radius: 18px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .member-card img { width: 72px; height: 72px; border-radius: 18px; object-fit: cover; }
+    .service-group, .calendar-group, .giving-group { display: grid; gap: 1rem; padding: 1rem; border-radius: 24px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.12); }
+    .service-item, .calendar-item, .giving-item { padding: 1rem; border-radius: 18px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .service-item h4, .calendar-item h4, .giving-item h4 { margin: 0 0 0.5rem; }
+    .service-item p, .calendar-item p, .giving-item p { margin: 0; color: rgba(255, 255, 255, 0.78); }
+    .service-category { display: grid; gap: 0.75rem; }
+    .service-category h3 { margin: 0; color: var(--yellow); }
+    .service-card { display: grid; gap: 0.75rem; }
+    .service-card img { width: 100%; border-radius: 18px; object-fit: cover; min-height: 160px; }
+
+    .section { padding: 10rem 1.5rem 4rem; position: relative; z-index: 1; }
+    .section-alt { background: rgba(255, 255, 255, 0.03); }
+    .container { max-width: 1180px; margin: 0 auto; }
+    .section-head { display: grid; gap: 0.85rem; }
+    .section-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--yellow); }
+    .section-title { font-family: 'Syne', sans-serif; font-size: clamp(2rem, 4vw, 3.2rem); margin: 0; line-height: 1.05; }
+    .section-copy { color: rgba(255, 255, 255, 0.72); max-width: 760px; font-size: 1rem; line-height: 1.8; }
+
+    .hero { min-height: 92vh; display: grid; place-items: center; text-align: center; padding-top: 10rem; background-image: url('congregation-bw.jpg'); background-size: cover; background-position: center; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 5, 5, 0.34), rgba(5, 5, 5, 0.98)); }
+    .hero-content { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 0.65rem; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: var(--yellow); }
+    .hero-eyebrow::before { content: ''; width: 32px; height: 2px; background: var(--yellow); border-radius: 999px; }
+    .hero-copy { font-family: 'Syne', sans-serif; font-size: clamp(2.8rem, 6vw, 5rem); line-height: 0.95; margin: 1.3rem 0 1rem; letter-spacing: -0.04em; }
+    .hero-copy em { color: var(--yellow); font-style: normal; }
+    .hero-text { color: rgba(255, 255, 255, 0.82); font-size: 1.05rem; line-height: 1.9; max-width: 720px; margin: 0 auto; }
+    .hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: 2rem; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem 1.8rem; border-radius: 999px; font-weight: 700; transition: transform 0.2s, background 0.2s; }
+    .button-primary { background: var(--yellow); color: #111; }
+    .button-secondary { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text); }
+    .button:hover { transform: translateY(-2px); }
+
+    .hero-banner { display: inline-grid; grid-template-columns: auto auto; gap: 1rem; align-items: center; margin: 3rem auto 0; padding: 1.25rem 1.4rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.05); }
+    .hero-banner strong { display: block; font-family: 'Syne', sans-serif; font-size: 1rem; color: var(--yellow); }
+    .hero-banner span { color: rgba(255, 255, 255, 0.7); }
+    .countdown-pill { display: inline-flex; align-items: center; gap: 0.7rem; padding: 0.85rem 1rem; border-radius: 999px; background: rgba(245, 200, 66, 0.14); color: var(--yellow); font-weight: 700; }
+
+    .feature-card { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 1.5rem; align-items: center; margin-top: 2rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 28px; padding: 2rem; }
+    .feature-card img { width: 100%; border-radius: 20px; object-fit: cover; max-height: 430px; filter: grayscale(100%) contrast(1.1); }
+    .feature-copy { display: grid; gap: 1.1rem; }
+    .feature-copy .tag { display: inline-flex; align-items: center; padding: 0.55rem 1rem; border-radius: 999px; background: rgba(245, 200, 66, 0.16); color: var(--yellow); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+    .feature-copy h3 { margin: 0; font-size: clamp(2rem, 4vw, 2.8rem); line-height: 1.05; }
+    .feature-copy p { color: rgba(255, 255, 255, 0.76); line-height: 1.9; }
+    .feature-copy .meta { display: flex; flex-wrap: wrap; gap: 0.75rem; color: rgba(255, 255, 255, 0.7); font-size: 0.95rem; }
+    .feature-copy .announcement-actions { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-top: 0.5rem; }
+
+    .announcement-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; margin-top: 2rem; }
+    .announcement-card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 1.5rem; transition: transform 0.2s, border-color 0.2s; }
+    .announcement-card:hover { transform: translateY(-2px); border-color: var(--yellow); }
+    .announcement-card h4 { margin: 0 0 0.75rem; font-size: 1.05rem; }
+    .announcement-card p { color: rgba(255, 255, 255, 0.75); line-height: 1.8; margin: 0; }
+    .announcement-card .tag { display: inline-flex; padding: 0.35rem 0.75rem; border-radius: 999px; background: rgba(245, 200, 66, 0.14); color: var(--yellow); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.9rem; }
+    .announcement-card .date { display: block; margin-top: 1rem; color: rgba(255, 255, 255, 0.5); font-size: 0.78rem; }
+
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; margin-top: 2rem; }
+    .sermon-card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 1.6rem; display: grid; gap: 1rem; transition: transform 0.2s, border-color 0.2s; }
+    .sermon-card:hover { transform: translateY(-2px); border-color: var(--yellow); }
+    .sermon-card h4 { margin: 0 0 0.6rem; font-size: 1.05rem; }
+    .sermon-card p { color: rgba(255, 255, 255, 0.75); line-height: 1.8; margin: 0; }
+    .sermon-card .meta { display: flex; flex-wrap: wrap; gap: 0.85rem; color: rgba(255, 255, 255, 0.66); font-size: 0.9rem; }
+    .sermon-card .button-link { margin-top: 1rem; display: inline-flex; align-items: center; padding: 0.85rem 1.25rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.05); color: var(--text); font-weight: 700; }
+
+    .about-panel { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 1.5rem; margin-top: 2rem; }
+    .about-copy, .about-card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 2rem; }
+    .about-copy h3 { margin: 0 0 1rem; font-size: 1.45rem; }
+    .about-copy p { margin: 0 0 1.25rem; color: rgba(255, 255, 255, 0.78); line-height: 1.85; }
+    .about-card h4 { margin: 0 0 1rem; color: var(--yellow); font-size: 1rem; }
+    .about-card p { margin: 0.65rem 0; color: rgba(255, 255, 255, 0.76); line-height: 1.8; }
+    .social-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+    .social-link { display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.75rem 1rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.04); color: var(--text); }
+    .social-link:hover { border-color: var(--yellow); color: var(--yellow); }
+
+    .prayer-panel { display: grid; grid-template-columns: 1.3fr 0.9fr; gap: 1.5rem; margin-top: 2rem; }
+    .prayer-box { border-radius: 24px; padding: 2rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .prayer-box h3 { margin: 0 0 1.25rem; font-size: 1.55rem; }
+    .form-group { display: grid; gap: 0.4rem; margin-bottom: 1rem; }
+    .form-group label { font-size: 0.82rem; text-transform: uppercase; color: rgba(255, 255, 255, 0.68); letter-spacing: 0.09em; }
+    .form-group input, .form-group textarea { width: 100%; padding: 1rem; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.04); color: var(--text); outline: none; resize: vertical; }
+    .form-actions { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-top: 1rem; }
+    .link-pill { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.95rem 1.25rem; border-radius: 999px; background: rgba(37, 211, 102, 0.14); color: #d8ffd8; font-weight: 700; }
+
+    .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+    .contact-card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 1.5rem; }
+    .contact-card h4 { margin: 0 0 0.75rem; color: var(--yellow); font-size: 0.98rem; }
+    .contact-card p { margin: 0; color: rgba(255, 255, 255, 0.76); line-height: 1.85; }
+
+    .footer { padding: 3rem 1.5rem 2rem; background: #050505; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; max-width: 1180px; margin: 0 auto; }
+    .footer-copy { text-align: center; margin: 0 auto; }
+    .footer-copy strong { display: block; font-size: 1.05rem; margin-bottom: 0.4rem; }
+    .footer-copy p { margin: 0; color: rgba(255, 255, 255, 0.65); }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 1rem; }
+    .footer-links a { color: rgba(255, 255, 255, 0.72); font-size: 0.95rem; }
+
+    /* audio player removed by request */
+    .player-control { border: none; width: 42px; height: 42px; border-radius: 50%; background: var(--yellow); color: #111; font-weight: 700; cursor: pointer; }
+    .track-info { min-width: 0; overflow: hidden; }
+    .track-info strong { display: block; font-size: 0.98rem; }
+    .track-info span { display: block; color: rgba(255, 255, 255, 0.7); font-size: 0.84rem; margin-top: 0.25rem; }
+    .progress { flex: 1; height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+    .progress-fill { width: 0%; height: 100%; background: var(--yellow); }
+
+    @media (max-width: 1024px) {
+      .feature-card, .about-panel, .prayer-panel { grid-template-columns: 1fr; }
+      .hero-banner { width: min(600px, 100%); }
+      .nav-links { display: none; }
+      .nav-toggle { display: inline-flex; }
+    }
+    @media (max-width: 720px) {
+      header { position: relative; }
+      .section { padding: 8rem 1rem 3rem; }
+      .hero { padding-top: 8rem; }
+      .hero-copy { font-size: 2.8rem; }
+      .hero-banner { padding: 1rem 1.1rem; }
+      .button, .button-primary, .button-secondary { width: 100%; justify-content: center; }
+      .topbar { flex-wrap: wrap; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+      .search-wrapper { width: 100%; }
+      .mobile-menu { right: 0; left: 0; margin: 0 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <div class="topbar">
+        <a class="brand" href="#home">
+          <div class="brand-logo">K</div>
+          <div class="brand-text">
+            <strong>Kingdom Impactors</strong>
+            <span>Church</span>
+          </div>
+        </a>
+        <div class="nav-bar">
+          <nav class="nav-links">
+            <a href="#announcements">Announcements</a>
+            <a href="structures.html">Church Structures</a>
+            <a href="calendar.html">Calendar</a>
+            <!-- <a href="services.html">Church Services</a> -->
+            <a href="giving.html">Giving</a>
+            <a href="#about-section">About</a>
+            <a href="#sermons-section">Sermons</a>
+            <a href="#prayer-section">Prayer</a>
+            <a href="#contact-section">Contact</a>
+          </nav>
+        </div>
+      </div>
+      
+    </header>
+
+    <main>
+      <section class="hero" id="home">
+        <div class="hero-content">
+          <p class="hero-eyebrow">Kingdom Impactors Church</p>
+          <h1 class="hero-copy">Faith. Purpose. <em>Impact.</em></h1>
+          <p class="hero-text">A church built for the generation that refuses to separate excellence from devotion. You belong here.</p>
+          <div class="hero-actions">
+            <a href="#announcements" class="button button-primary">Latest Announcements</a>
+            <a href="#prayer-section" class="button button-secondary">Prayer Requests</a>
+          </div>
+          <div class="hero-banner">
+            <div>
+              <strong>Night of Strength</strong>
+              <span>Countdown to our next big gathering.</span>
+            </div>
+            <div class="countdown-pill">
+              <span id="countdownTimer">00d 00h 00m 00s</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="announcements">
+        <div class="container">
+          <div class="section-head">
+            <p class="section-label">Announcements</p>
+            <h2 class="section-title">This Week at KIC</h2>
+          </div>
+          <p class="section-copy">Events, services, membership updates and newsletter highlights for the church family.</p>
+
+          <div class="feature-card">
+            <img id="featuredImage" src="announcement-feature.jpg" alt="Latest announcement image" onerror="this.style.display='none'" />
+            <div class="feature-copy">
+              <span class="tag">Latest Announcement</span>
+              <h3 id="featuredTitle">Kingdom Conference Launch</h3>
+              <p id="featuredSummary">Join the family for an inspiring week of worship, teaching and fellowship. Doors open at 08:30 Sunday.</p>
+              <div class="meta">
+                <span id="featuredDate">This week</span>
+                <span id="featuredCategory">Service · News</span>
+              </div>
+              <div class="announcement-actions">
+                <a href="announcements.html" class="button button-primary">See More Details</a>
+                <a href="https://www.youtube.com/" target="_blank" class="button button-secondary">Watch Online</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="announcement-grid" id="announcementGrid"></div>
+        </div>
+      </section>
+
+      <section class="section section-alt" id="about-section">
+        <div class="container">
+          <div class="section-head">
+            <p class="section-label">About Us</p>
+            <h2 class="section-title">Who We Are</h2>
+          </div>
+          <p class="section-copy">We are a dynamic Bible-based ministry aimed at growing dominant and impactful generations in Christ,
+             through shaping culture and influencing societies.</p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="about-copy">
+              <h3>Our Mission</h3>
+              <ul style="color: rgba(255,255,255,0.78); line-height: 1.8; margin: 0; padding-left: 1.5rem;">
+                <li>EQUIP THE NEXT GENERATION WITH LEADERSHIP, FAITH AND LIFE SKILL</li>
+                <li>STRENGTHEN MARRIAGES AND FAMILIES THROUGH KINGDOM PRINCIPLES</li>
+                <li>EMPOWER STUDENTS TO LIVE BOLD, UNCOMPROMISING KINGDOM LIVES IN THEIR SCHOOLS/UNIVERSITIES</li>
+                <li>ESTABLISH A CHURCH CULTURE THAT CELEBRATES EXCELLENCE, INTEGRITY, INNOVATION, GROWTH, LOVE, HONOUR AND FAITH.</li>
+              </ul>
+            </div>
+            <div class="about-copy">
+              <h3>Our Vision</h3>
+              <p>TO RAISE A GENERATION OF IMPACTFUL, SPIRIT-EMPOWERED YOUNG LEADERS WHO WILL SHAPE CULTURE, 
+                INFLUENCE SOCIETY, AND ADVANCE GOD'S KINGDOM - STARTING IN PRETORIA CENTRAL AND REACHING THE NATION.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="sermons-section">
+        <div class="container">
+          <div class="section-head">
+            <p class="section-label">Sermons</p>
+            <h2 class="section-title">Recent Series</h2>
+          </div>
+          <p class="section-copy">Browse sermon series, watch the latest teaching, and preview upcoming message tracks.</p>
+          <div class="cards-grid" id="sermonGrid"></div>
+        </div>
+      </section>
+
+      <section class="section section-alt" id="worship-section">
+        <div class="container">
+          <div class="section-head">
+            <p class="section-label">Worship & Praise</p>
+            <h2 class="section-title">Sunday Worship and Praise Focus</h2>
+          </div>
+          <div style="margin-top:1.25rem;">
+            <h3 style="color:var(--yellow); margin:0 0 0.5rem;">Worship Songs</h3>
+            <div id="songListFront" class="cards-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-alt" id="prayer-section">
+        <div class="container">
+          <div class="section-head">
+            <p class="section-label">Prayer Request</p>
+            <h2 class="section-title">Send Your Request</h2>
+          </div>
+          <div class="prayer-panel">
+            <div class="prayer-box">
+              <h3>Prayer Request Form</h3>
+              <div class="form-group">
+                <label for="prayerName">Name</label>
+                <input id="prayerName" type="text" placeholder="Your name" />
+              </div>
+              <div class="form-group">
+                <label for="prayerEmail">Email</label>
+                <input id="prayerEmail" type="email" placeholder="Your email" />
+              </div>
+              <div class="form-group">
+                <label for="prayerMessage">Prayer Request</label>
+                <textarea id="prayerMessage" placeholder="Type your prayer request here"></textarea>
+              </div>
+              <div class="form-actions">
+                <button class="button button-primary" type="button" onclick="sendPrayerRequest()">Send Request</button>
+                <a class="link-pill" href="https://wa.me/27634859461?text=Hello%20KIC%2C%20I%20would%20love%20to%20join%20the%20WhatsApp%20community." target="_blank">WhatsApp Community</a>
+              </div>
+            </div>
+            <div class="prayer-box">
+              <h3>Stay Updated</h3>
+              <p>Want service reminders, event updates and worship schedules? Send a quick email to join our update list.</p>
+              <button class="button button-secondary" type="button" onclick="subscribeStayUpdated()">Email Stay Updated</button>
+              <div class="contact-card" style="margin-top:1.5rem;">
+                <h4>Quick Links</h4>
+                <a class="social-link" href="https://instagram.com/kic_myhome" target="_blank">Instagram</a>
+                <a class="social-link" href="https://youtube.com" target="_blank">YouTube</a>
+                <a class="social-link" href="https://tiktok.com" target="_blank">TikTok</a>
+                <a class="social-link" href="https://facebook.com" target="_blank">Facebook</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="contact-section">
+        <div class="container">
+          <div class="section-head">
+            <p class="section-label">Connect</p>
+            <h2 class="section-title">Contact Information</h2>
+          </div>
+          <p class="section-copy">Reach out by email or WhatsApp, or find us on social media.</p>
+          <div class="contact-grid">
+            <div class="contact-card">
+              <h4>Location</h4>
+              <p>336 Struben, Pretoria Central</p>
+              <a class="social-link" href="https://www.google.com/maps/search/?api=1&query=336+Struben+Pretoria+Central" target="_blank">Open map</a>
+            </div>
+            <div class="contact-card">
+              <h4>Phone</h4>
+              <p><a href="tel:0634859461">+27 634 859 461</a></p>
+            </div>
+            <div class="contact-card">
+              <h4>Email</h4>
+              <p><a href="mailto:KingdomImpactorsChurch@gmail.com">KingdomImpactorsChurch@gmail.com</a></p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner container">
+        <div class="footer-copy">
+          <strong>Kingdom Impactors Church</strong>
+          <p>Impacting the Kingdom, one life at a time.</p>
+          <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5);">© 2025 KIC, All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+   
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .catch(err => console.warn('SW registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>

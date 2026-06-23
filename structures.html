@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Church Structures - KIC</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="page-shell">
+  <header class="page-header">
+    <a href="Home.html" style="color:var(--yellow);font-weight:800;">← Home</a>
+    <h1>Church Structures</h1>
+  </header>
+  <main class="page-main">
+    <div class="page-card">
+      <div id="structuresContainer"></div>
+    </div>
+  </main>
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const data = await window.KIC.getSiteData();
+      const container = document.getElementById('structuresContainer');
+      const structures = data.structures || [];
+      if (!structures.length) {
+        container.innerHTML = '<p>No structures saved yet.</p>';
+        return;
+      }
+      container.innerHTML = structures.map(s => `
+        <section style="margin-bottom:1.25rem;padding:1rem;border-radius:12px;background:rgba(255,255,255,0.03);">
+          <h2 style="margin:0 0 0.5rem">${s.name}</h2>
+          <div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+            <div style="flex:0 0 360px;">
+              ${s.image ? `<img src="${s.image}" alt="${s.name}" style="width:100%;border-radius:8px;display:block;" />` : ''}
+            </div>
+            <div style="flex:1 1 320px;display:flex;flex-direction:column;justify-content:flex-start;">
+              ${(s.members||[]).map(m => `<div style="margin-bottom:0.6rem;display:flex;gap:0.6rem;align-items:baseline;"><strong style="min-width:180px;">${m.name}</strong><span style="color:rgba(255,255,255,0.78)">${m.role||'Member'}</span></div>`).join('')}
+            </div>
+          </div>
+        </section>
+      `).join('');
+    });
+  </script>
+</body>
+</html>

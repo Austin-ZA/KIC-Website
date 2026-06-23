@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KIC Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    :root {
+      --yellow: #F5C842;
+      --yellow2: #FFD966;
+      --black: #050506;
+      --card: #0f0f11;
+      --card2: #141417;
+      --border: rgba(255,255,255,0.1);
+      --text: #F7F5F0;
+      --muted: rgba(255,255,255,0.62);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--black); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+
+    /* LOGIN */
+    .login-wrap {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at 50% 30%, rgba(245,200,66,0.1), transparent 60%);
+      padding: 1.5rem;
+    }
+    .login-card {
+      background: var(--card); border: 1px solid rgba(245,200,66,0.25);
+      border-radius: 24px; padding: 3rem 2.5rem;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+    }
+    .login-logo {
+      display: block; width: 72px; height: 72px; border-radius: 50%;
+      object-fit: cover; border: 3px solid var(--yellow);
+      margin: 0 auto 1.5rem;
+    }
+    .login-card h2 { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; text-align: center; margin-bottom: 0.4rem; }
+    .login-card p { text-align: center; color: var(--muted); font-size: 0.88rem; margin-bottom: 2rem; }
+    .field-label { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; margin-top: 1rem; }
+    input[type=text], input[type=password], input[type=email], input[type=url], textarea, select {
+      width: 100%; padding: 0.85rem 1rem;
+      border-radius: 12px; border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04); color: var(--text);
+      font-family: inherit; font-size: 0.92rem; outline: none;
+      transition: border-color 0.2s; resize: vertical;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--yellow); }
+    input[type=file] { background: rgba(245,200,66,0.05); border-style: dashed; cursor: pointer; }
+    .btn-primary {
+      width: 100%; background: var(--yellow); color: #111;
+      border: none; padding: 1rem; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 800; cursor: pointer;
+      font-family: 'Syne', sans-serif; margin-top: 1.25rem;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-primary:hover { background: var(--yellow2); transform: translateY(-1px); }
+    .btn-sm {
+      background: var(--yellow); color: #111;
+      border: none; padding: 0.6rem 1.25rem;
+      border-radius: 8px; font-size: 0.82rem; font-weight: 700;
+      cursor: pointer; font-family: 'Syne', sans-serif;
+      transition: background 0.2s;
+    }
+    .btn-sm:hover { background: var(--yellow2); }
+    .btn-delete {
+      background: rgba(248,113,113,0.12);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: #F87171; padding: 0.5rem 1rem;
+      border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: background 0.2s;
+    }
+    .btn-delete:hover { background: rgba(248,113,113,0.22); }
+    .error-msg { color: #F87171; font-size: 0.85rem; text-align: center; margin-top: 0.75rem; display: none; }
+
+    /* LAYOUT */
+    .shell { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 240px; flex-shrink: 0;
+      background: var(--card); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; bottom: 0; left: 0; z-index: 50; overflow-y: auto;
+    }
+    .sidebar-brand {
+      padding: 1.5rem 1.25rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .sidebar-brand img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--yellow); object-fit: cover; }
+    .sidebar-brand-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.95rem; line-height: 1.2; }
+    .sidebar-brand-text small { display: block; font-size: 0.65rem; font-weight: 500; color: var(--yellow); letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Inter', sans-serif; }
+    .nav-group { padding: 1rem 0.75rem 0.5rem; }
+    .nav-group-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.3); padding: 0 0.5rem; margin-bottom: 0.4rem; }
+    .nav-btn {
+      display: flex; align-items: center; gap: 0.7rem;
+      width: 100%; padding: 0.65rem 0.75rem;
+      border-radius: 8px; border: none;
+      background: none; color: var(--muted);
+      font-size: 0.87rem; font-weight: 500;
+      cursor: pointer; text-align: left; font-family: inherit;
+      transition: background 0.15s, color 0.15s; margin-bottom: 0.15rem;
+    }
+    .nav-btn:hover { background: rgba(245,200,66,0.08); color: var(--text); }
+    .nav-btn.active { background: rgba(245,200,66,0.14); color: var(--yellow); }
+    .nav-btn .icon { width: 1.1rem; text-align: center; font-size: 0.95rem; }
+    .sidebar-footer { margin-top: auto; padding: 1.25rem; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.5rem; }
+    .btn-view-site {
+      display: block; text-align: center; padding: 0.65rem;
+      background: rgba(245,200,66,0.1); border: 1px solid rgba(245,200,66,0.25);
+      color: var(--yellow); border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      transition: background 0.2s;
+    }
+    .btn-view-site:hover { background: rgba(245,200,66,0.2); }
+    .btn-logout {
+      width: 100%; padding: 0.65rem;
+      background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25);
+      color: #F87171; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: background 0.2s;
+    }
+    .btn-logout:hover { background: rgba(248,113,113,0.2); }
+
+    /* MAIN */
+    .main-content { margin-left: 240px; flex: 1; }
+    .topbar {
+      padding: 1.1rem 2rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; background: rgba(5,5,6,0.92); backdrop-filter: blur(12px); z-index: 40;
+    }
+    .topbar h1 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; }
+    .topbar .badge {
+      background: rgba(245,200,66,0.12); color: var(--yellow);
+      border: 1px solid rgba(245,200,66,0.25); border-radius: 999px;
+      font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.85rem;
+    }
+    .panel { display: none; padding: 2rem; max-width: 860px; }
+    .panel.active { display: block; }
+
+    /* CARDS */
+    .admin-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 1.75rem; margin-bottom: 1.5rem;
+    }
+    .admin-card h3 {
+      font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800;
+      margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .list-item {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 0.75rem;
+      display: flex; align-items: flex-start; gap: 1rem;
+    }
+    .list-item-body { flex: 1; }
+    .list-item-body strong { font-weight: 600; display: block; margin-bottom: 0.2rem; }
+    .list-item-body span { font-size: 0.82rem; color: var(--muted); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; }
+    .stat-card .val { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--yellow); }
+    .stat-card .lbl { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+    .toast {
+      position: fixed; top: 1.25rem; right: 1.25rem;
+      background: var(--card); border: 1px solid #4ADE80;
+      color: #4ADE80; padding: 0.75rem 1.25rem; border-radius: 10px;
+      font-size: 0.88rem; font-weight: 600; z-index: 999;
+      transform: translateY(-80px); opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .song-slots .slot { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; }
+    .slot-header { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem; }
+    .slot-num { background: rgba(245,200,66,0.18); color: var(--yellow); font-family: 'Syne', sans-serif; font-weight: 800; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .img-preview { margin-top: 0.75rem; }
+    .img-preview img { max-width: 280px; border-radius: 10px; border: 1px solid var(--border); }
+    .note { font-size: 0.8rem; color: var(--muted); line-height: 1.6; margin-bottom: 1rem; }
+    .persist-note {
+      background: rgba(245,200,66,0.08); border: 1px solid rgba(245,200,66,0.2);
+      border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.5rem;
+      font-size: 0.82rem; color: rgba(255,255,255,0.7); line-height: 1.65;
+    }
+    .persist-note strong { color: var(--yellow); }
+
+    @media (max-width: 768px) {
+      .sidebar { position: static; width: 100%; height: auto; }
+      .main-content { margin-left: 0; }
+      .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-wrap">
+  <div class="login-card">
+    <img src="KIC-Logo.jpg" alt="KIC Logo" class="login-logo" onerror="this.style.display='none'"/>
+    <h2>Admin Login</h2>
+    <p>Kingdom Impactors Church — Authorised Access Only</p>
+    <label class="field-label" for="adminPassword">Password</label>
+    <input id="adminPassword" type="password" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')loginAdmin()"/>
+    <button class="btn-primary" onclick="loginAdmin()">Sign In →</button>
+    <p class="error-msg" id="loginError">Incorrect password. Try again.</p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboardScreen" style="display:none;">
+  <div class="shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="KIC-Logo.jpg" alt="KIC" onerror="this.style.display='none'"/>
+        <div class="sidebar-brand-text">
+          KIC Admin
+          <small>Dashboard</small>
+        </div>
+      </div>
+      <div class="nav-group">
+        <p class="nav-group-label">Overview</p>
+        <button class="nav-btn active" onclick="showPanel('dashboard',this)"><span class="icon">🏠</span> Dashboard</button>
+      </div>
+      <div class="nav-group">
+        <p class="nav-group-label">Content</p>
+        <button class="nav-btn" onclick="showPanel('announcements',this)"><span class="icon">📢</span> Announcements</button>
+        <button class="nav-btn" onclick="showPanel('sermons',this)"><span class="icon">🎙️</span> Sermons</button>
+        <button class="nav-btn" onclick="showPanel('songs',this)"><span class="icon">🎵</span> Praise & Worship</button>
+        <button class="nav-btn" onclick="showPanel('structures',this)"><span class="icon">👥</span> Church Structure</button>
+        <button class="nav-btn" onclick="showPanel('calendar',this)"><span class="icon">🗓️</span> Calendar & Events</button>
+      </div>
+      <div class="nav-group">
+        <p class="nav-group-label">Settings</p>
+        <button class="nav-btn" onclick="showPanel('contact',this)"><span class="icon">📍</span> Contact Info</button>
+        <button class="nav-btn" onclick="showPanel('giving',this)"><span class="icon">💛</span> Giving Details</button>
+        <button class="nav-btn" onclick="showPanel('services',this)"><span class="icon">⛪</span> Church Services</button>
+      </div>
+      <div class="sidebar-footer">
+        <a href="Home.html" class="btn-view-site" target="_blank">↗ View Homepage</a>
+        <button class="btn-logout" onclick="logoutAdmin()">Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-content">
+      <div class="topbar">
+        <h1 id="panelTitle">Dashboard</h1>
+        <span class="badge">Kingdom Impactors Church</span>
+      </div>
+
+      <div class="persist-note" style="margin:1.5rem 2rem 0;">
+        <strong>💾 Permanent Storage Active</strong> — All changes are saved to IndexedDB in the browser.
+        Data persists forever across sessions, restarts and refreshes. No backend required.
+      </div>
+
+      <!-- DASHBOARD -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="admin-card">
+          <h3>📋 Quick Guide</h3>
+          <p class="note">
+            Use the sidebar to manage all content. Every save is stored permanently in IndexedDB — it will remain after browser restarts,
+            closing tabs, or clearing cookies. The homepage reads from the same store and updates live.
+            <br/><br/>
+            <strong style="color:var(--yellow);">Images</strong> uploaded in the admin are stored as base64 directly in the database — no hosting needed.
+          </p>
+        </div>
+      </div>
+
+      <!-- ANNOUNCEMENTS -->
+      <div class="panel" id="panel-announcements">
+        <div class="admin-card">
+          <h3>📢 Add Announcement</h3>
+          <label class="field-label">Title *</label>
+          <input type="text" id="annTitle" placeholder="Announcement title"/>
+          <label class="field-label">Date</label>
+          <input type="text" id="annDate" placeholder="e.g. Sunday 29 June 2025"/>
+          <label class="field-label">Category</label>
+          <select id="annCat">
+            <option>Service</option><option>Membership</option><option>Youth</option>
+            <option>Prayer</option><option>Baptism</option><option>Newsletter</option>
+            <option>Event</option><option>Giving</option><option>General</option>
+          </select>
+          <label class="field-label">Body *</label>
+          <textarea id="annBody" rows="4" placeholder="Announcement content..."></textarea>
+          <label class="field-label">Image (JPG/PNG — stored permanently)</label>
+          <input type="file" id="annFile" accept="image/jpeg,image/png"/>
+          <div class="img-preview" id="annImgPreview"></div>
+          <br/><button class="btn-sm" onclick="addAnnouncement()">+ Add Announcement</button>
+        </div>
+        <div class="admin-card">
+          <h3>📋 Current Announcements</h3>
+          <div id="annList"></div>
+        </div>
+      </div>
+
+      <!-- SERMONS -->
+      <div class="panel" id="panel-sermons">
+        <div class="admin-card">
+          <h3>🎙️ Add / Update Sermon</h3>
+          <label class="field-label">Sermon Title *</label>
+          <input type="text" id="serTitle" placeholder="e.g. The Cost Of Carrying God"/>
+          <label class="field-label">Speaker</label>
+          <input type="text" id="serSpeaker" placeholder="Pastor T.G NDALA"/>
+          <label class="field-label">Description</label>
+          <textarea id="serDesc" rows="3" placeholder="Brief description of the sermon..."></textarea>
+          <label class="field-label">YouTube / Podcast Link</label>
+          <input type="url" id="serLink" placeholder="https://youtube.com/..."/>
+          <br/><button class="btn-sm" onclick="addSermon()">+ Add Sermon</button>
+        </div>
+        <div class="admin-card">
+          <h3>📋 Sermon List</h3>
+          <div id="serList"></div>
+        </div>
+      </div>
+
+      <!-- SONGS -->
+      <div class="panel" id="panel-songs">
+        <div class="admin-card">
+          <h3>🎵 This Sunday's Praise & Worship Songs</h3>
+          <p class="note">Up to 5 songs. Provide a direct audio/video URL. Changes are saved permanently.</p>
+          <div class="song-slots" id="songSlots"></div>
+          <button class="btn-sm" onclick="saveSongs()">💾 Save All Songs</button>
+        </div>
+        <div class="admin-card">
+          <h3>➕ Add Extra Song</h3>
+          <p class="note">Add songs beyond the 5 slots to the worship list.</p>
+          <label class="field-label">Song Title *</label>
+          <input type="text" id="songTitle" placeholder="Way Maker"/>
+          <label class="field-label">Artist / Worship Team</label>
+          <input type="text" id="songArtist" placeholder="Sinach"/>
+          <label class="field-label">Song URL (YouTube, SoundCloud, direct MP3, etc.)</label>
+          <input type="url" id="songUrl" placeholder="https://..."/>
+          <br/><button class="btn-sm" onclick="addSong()" style="margin-top:0.75rem;">+ Add Song</button>
+          <div id="songList" style="margin-top:1rem;"></div>
+        </div>
+      </div>
+
+      <!-- STRUCTURES -->
+      <div class="panel" id="panel-structures">
+        <div class="admin-card">
+          <h3>👥 Edit Church Structure</h3>
+          <label class="field-label">Select Structure</label>
+          <select id="structureSelect" onchange="loadStructureDetails()"></select>
+          <label class="field-label">Structure Name</label>
+          <input type="text" id="structureName" placeholder="e.g. Worship Team"/>
+          <label class="field-label">Upload Image (stored permanently)</label>
+          <input type="file" id="structureImageFile" accept="image/jpeg,image/png" onchange="previewStructureImg()"/>
+          <div class="img-preview" id="structureImgPreview"></div>
+          <label class="field-label">Or Image URL</label>
+          <input type="url" id="structureImageUrl" placeholder="https://..."/>
+          <label class="field-label">Members (one per line: Name - Role)</label>
+          <textarea id="structureMembers" rows="5" placeholder="Pastor T.G NDALA - Lead Pastor&#10;Elder Mary - Assistant Pastor"></textarea>
+          <br/><button class="btn-sm" onclick="saveStructure()">💾 Save Structure</button>
+        </div>
+      </div>
+
+      <!-- CALENDAR -->
+      <div class="panel" id="panel-calendar">
+        <div class="admin-card">
+          <h3>🗓️ Add Calendar Event</h3>
+          <label class="field-label">Month Label</label>
+          <input type="text" id="calMonth" placeholder="e.g. July 2026"/>
+          <label class="field-label">Event Title *</label>
+          <input type="text" id="calTitle" placeholder="Sunday Celebration Service"/>
+          <label class="field-label">Day / Date</label>
+          <input type="text" id="calDay" placeholder="Sunday or 15 July 2026"/>
+          <label class="field-label">Time</label>
+          <input type="time" id="calTime"/>
+          <label class="field-label">Location</label>
+          <input type="text" id="calLocation" placeholder="336 Struben, Pretoria Central"/>
+          <label class="field-label">Description</label>
+          <textarea id="calDesc" rows="3" placeholder="Event description..."></textarea>
+          <br/><button class="btn-sm" onclick="addCalEvent()">+ Add Event</button>
+        </div>
+        <div class="admin-card">
+          <h3>📋 Calendar Events</h3>
+          <div id="calList"></div>
+        </div>
+      </div>
+
+      <!-- CONTACT -->
+      <div class="panel" id="panel-contact">
+        <div class="admin-card">
+          <h3>📍 Contact Information</h3>
+          <label class="field-label">Physical Address</label>
+          <input type="text" id="ciAddress" placeholder="336 Struben, Pretoria Central"/>
+          <label class="field-label">Phone Number</label>
+          <input type="text" id="ciPhone" placeholder="+27 634 859 461"/>
+          <label class="field-label">Email Address</label>
+          <input type="email" id="ciEmail" placeholder="KingdomImpactorsChurch@gmail.com"/>
+          <label class="field-label">WhatsApp Number (with country code)</label>
+          <input type="text" id="ciWhatsApp" placeholder="+27634859461"/>
+          <label class="field-label">Service Times (display text)</label>
+          <textarea id="ciTimes" rows="3" placeholder="Sun 08:30 intercession, 09:30–12:00 service; Tue 17:30 intercession, 18:00 Choose Word."></textarea>
+          <br/><button class="btn-sm" onclick="saveContact()">💾 Save Contact Info</button>
+        </div>
+      </div>
+
+      <!-- GIVING -->
+      <div class="panel" id="panel-giving">
+        <div class="admin-card">
+          <h3>💛 Giving / Banking Details</h3>
+          <label class="field-label">Tithe — Bank Name</label>
+          <input type="text" id="titheBank" placeholder="Kingdom Impact Bank"/>
+          <label class="field-label">Tithe — Account Number</label>
+          <input type="text" id="titheAccount" placeholder="1234567890"/>
+          <label class="field-label">Offering — Bank Name</label>
+          <input type="text" id="offeringBank" placeholder="Kingdom Impact Bank"/>
+          <label class="field-label">Offering — Account Number</label>
+          <input type="text" id="offeringAccount" placeholder="0987654321"/>
+          <br/><button class="btn-sm" onclick="saveGiving()">💾 Save Giving Info</button>
+        </div>
+      </div>
+
+      <!-- SERVICES -->
+      <div class="panel" id="panel-services">
+        <div class="admin-card">
+          <h3>⛪ Choose Word Service</h3>
+          <label class="field-label">Title</label>
+          <input type="text" id="cwTitle" placeholder="Midweek Activation"/>
+          <label class="field-label">Description</label>
+          <textarea id="cwDesc" rows="3" placeholder="Description..."></textarea>
+          <label class="field-label">Image (optional)</label>
+          <input type="file" id="cwImageFile" accept="image/jpeg,image/png"/>
+          <br/><button class="btn-sm" onclick="addChooseWord()">+ Add Service</button>
+          <div id="cwList" style="margin-top:1rem;"></div>
+        </div>
+        <div class="admin-card">
+          <h3>⛪ Sunday Service</h3>
+          <label class="field-label">Title</label>
+          <input type="text" id="sunTitle" placeholder="Sunday Word"/>
+          <label class="field-label">Description</label>
+          <textarea id="sunDesc" rows="3" placeholder="Description..."></textarea>
+          <label class="field-label">Image (optional)</label>
+          <input type="file" id="sunImageFile" accept="image/jpeg,image/png"/>
+          <br/><button class="btn-sm" onclick="addSundayService()">+ Add Service</button>
+          <div id="sunList" style="margin-top:1rem;"></div>
+        </div>
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /shell -->
+</div><!-- /dashboardScreen -->
+
+<div class="toast" id="toast">✓ Saved permanently</div>
+
+<!-- app.js must load first to initialise window.KIC -->
+<script src="app.js"></script>
+<script>
+  const ADMIN_PASSWORD = 'KIC2026!';
+
+  // ── AUTH ──
+  function loginAdmin() {
+    if (document.getElementById('adminPassword').value.trim() === ADMIN_PASSWORD) {
+      sessionStorage.setItem('kic_admin_auth', '1');
+      showDashboard();
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+    }
+  }
+  function logoutAdmin() {
+    sessionStorage.removeItem('kic_admin_auth');
+    location.reload();
+  }
+  function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboardScreen').style.display = '';
+    initDashboard();
+  }
+  if (sessionStorage.getItem('kic_admin_auth') === '1') showDashboard();
+
+  // ── PANELS ──
+  const panelTitles = {
+    dashboard:'Dashboard', announcements:'Announcements', sermons:'Sermons',
+    songs:'Praise & Worship', structures:'Church Structure',
+    calendar:'Calendar & Events', contact:'Contact Info',
+    giving:'Giving Details', services:'Church Services'
+  };
+  function showPanel(id, btn) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + id).classList.add('active');
+    if (btn) btn.classList.add('active');
+    document.getElementById('panelTitle').textContent = panelTitles[id] || id;
+    loadPanel(id);
+  }
+
+  // ── TOAST ──
+  function toast(msg = '✓ Saved permanently') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── FILE READ ──
+  function readFile(input) {
+    return new Promise((res) => {
+      if (!input || !input.files || !input.files[0]) return res(null);
+      const f = input.files[0];
+      if (!f.type.startsWith('image/')) return res(null);
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = () => res(null);
+      r.readAsDataURL(f);
+    });
+  }
+
+  // ── INIT ──
+  async function initDashboard() {
+    await renderStats();
+    loadPanel('dashboard');
+  }
+
+  async function renderStats() {
+    const d = await window.KIC.getSiteData();
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card"><div class="val">${d.announcements.length}</div><div class="lbl">Announcements</div></div>
+      <div class="stat-card"><div class="val">${d.sermons.length}</div><div class="lbl">Sermons</div></div>
+      <div class="stat-card"><div class="val">${(d.songs||[]).filter(s=>s.title).length}</div><div class="lbl">Worship Songs</div></div>
+      <div class="stat-card"><div class="val">${(d.calendar?.events||[]).length}</div><div class="lbl">Events</div></div>
+      <div class="stat-card"><div class="val">${d.gallery.length}</div><div class="lbl">Gallery Photos</div></div>
+      <div class="stat-card"><div class="val">${d.structures.length}</div><div class="lbl">Structures</div></div>
+    `;
+  }
+
+  async function loadPanel(id) {
+    const d = await window.KIC.getSiteData();
+    if (id === 'announcements') renderAnnList(d);
+    if (id === 'sermons')       renderSerList(d);
+    if (id === 'songs')         { renderSongSlots(d); renderSongList(d); }
+    if (id === 'structures')    { renderStructureSelect(d); loadStructureDetails(); }
+    if (id === 'calendar')      renderCalList(d);
+    if (id === 'contact')       fillContact(d);
+    if (id === 'giving')        fillGiving(d);
+    if (id === 'services')      renderServices(d);
+  }
+
+  // ── ANNOUNCEMENTS ──
+  async function addAnnouncement() {
+    const title = document.getElementById('annTitle').value.trim();
+    const body  = document.getElementById('annBody').value.trim();
+    if (!title || !body) { toast('⚠ Title and body are required'); return; }
+    const image = await readFile(document.getElementById('annFile'));
+    const d = await window.KIC.getSiteData();
+    d.announcements.unshift({ title, body, date: document.getElementById('annDate').value.trim(), category: document.getElementById('annCat').value, image: image || '' });
+    await window.KIC.setSiteData(d);
+    document.getElementById('annTitle').value = '';
+    document.getElementById('annBody').value  = '';
+    document.getElementById('annDate').value  = '';
+    document.getElementById('annFile').value  = '';
+    document.getElementById('annImgPreview').innerHTML = '';
+    toast('✓ Announcement saved permanently');
+    renderAnnList(d);
+    renderStats();
+  }
+  document.getElementById('annFile')?.addEventListener('change', async function() {
+    const img = await readFile(this);
+    document.getElementById('annImgPreview').innerHTML = img ? `<img src="${img}" style="max-width:260px;border-radius:8px;margin-top:0.5rem;border:1px solid rgba(255,255,255,0.1)"/>` : '';
+  });
+  function renderAnnList(d) {
+    const el = document.getElementById('annList');
+    if (!el) return;
+    if (!d.announcements.length) { el.innerHTML = '<p class="note">No announcements yet.</p>'; return; }
+    el.innerHTML = d.announcements.map((a, i) => `
+      <div class="list-item">
+        <div class="list-item-body">
+          <strong>${a.title}</strong>
+          <span>${a.category} · ${a.date || 'No date'}</span>
+          <p style="font-size:0.84rem;color:rgba(255,255,255,0.5);margin-top:0.25rem;">${a.body.substring(0,90)}${a.body.length>90?'…':''}</p>
+        </div>
+        <button class="btn-delete" onclick="deleteAnnouncement(${i})">Delete</button>
+      </div>`).join('');
+  }
+  async function deleteAnnouncement(i) {
+    const d = await window.KIC.getSiteData();
+    d.announcements.splice(i, 1);
+    await window.KIC.setSiteData(d);
+    toast('Deleted');
+    renderAnnList(d);
+    renderStats();
+  }
+
+  // ── SERMONS ──
+  async function addSermon() {
+    const title = document.getElementById('serTitle').value.trim();
+    if (!title) { toast('⚠ Title required'); return; }
+    const d = await window.KIC.getSiteData();
+    d.sermons.unshift({ title, speaker: document.getElementById('serSpeaker').value.trim(), description: document.getElementById('serDesc').value.trim(), link: document.getElementById('serLink').value.trim() });
+    await window.KIC.setSiteData(d);
+    document.getElementById('serTitle').value   = '';
+    document.getElementById('serSpeaker').value = '';
+    document.getElementById('serDesc').value    = '';
+    document.getElementById('serLink').value    = '';
+    toast('✓ Sermon saved permanently');
+    renderSerList(d);
+    renderStats();
+  }
+  function renderSerList(d) {
+    const el = document.getElementById('serList');
+    if (!el) return;
+    if (!d.sermons.length) { el.innerHTML = '<p class="note">No sermons yet.</p>'; return; }
+    el.innerHTML = d.sermons.map((s, i) => `
+      <div class="list-item">
+        <div class="list-item-body">
+          <strong>${s.title}</strong>
+          <span>${s.speaker || ''}</span>
+          <p style="font-size:0.82rem;color:rgba(255,255,255,0.45);margin-top:0.2rem;">${s.description||''}</p>
+        </div>
+        <button class="btn-delete" onclick="deleteSermon(${i})">Delete</button>
+      </div>`).join('');
+  }
+  async function deleteSermon(i) {
+    const d = await window.KIC.getSiteData();
+    d.sermons.splice(i, 1);
+    await window.KIC.setSiteData(d);
+    toast('Deleted');
+    renderSerList(d);
+    renderStats();
+  }
+
+  // ── SONGS (5 slots) ──
+  function renderSongSlots(d) {
+    const songs = d.songs || [];
+    const container = document.getElementById('songSlots');
+    container.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+      const s = songs[i] || {};
+      const div = document.createElement('div');
+      div.className = 'slot';
+      div.innerHTML = `
+        <div class="slot-header"><div class="slot-num">${i+1}</div><label style="font-weight:600;">Song ${i+1}</label></div>
+        <div class="two-col">
+          <div><label class="field-label" style="margin-top:0;">Title</label><input type="text" id="st-${i}" value="${esc(s.title||'')}" placeholder="Song title"/></div>
+          <div><label class="field-label" style="margin-top:0;">Artist</label><input type="text" id="sa-${i}" value="${esc(s.artist||'')}" placeholder="Artist / worship team"/></div>
+        </div>
+        <label class="field-label">URL (YouTube, SoundCloud, direct MP3...)</label>
+        <input type="url" id="su-${i}" value="${esc(s.url||'')}" placeholder="https://..."/>`;
+      container.appendChild(div);
+    }
+  }
+  async function saveSongs() {
+    const d = await window.KIC.getSiteData();
+    const slots = [];
+    for (let i = 0; i < 5; i++) {
+      slots.push({ title: document.getElementById(`st-${i}`).value.trim(), artist: document.getElementById(`sa-${i}`).value.trim(), url: document.getElementById(`su-${i}`).value.trim() });
+    }
+    // preserve extra songs beyond 5
+    const extras = (d.songs || []).slice(5);
+    d.songs = [...slots, ...extras];
+    await window.KIC.setSiteData(d);
+    toast('✓ Songs saved permanently');
+    renderStats();
+  }
+  async function addSong() {
+    const title  = document.getElementById('songTitle').value.trim();
+    const artist = document.getElementById('songArtist').value.trim();
+    const url    = document.getElementById('songUrl').value.trim();
+    if (!title) { toast('⚠ Title required'); return; }
+    const d = await window.KIC.getSiteData();
+    d.songs = d.songs || [];
+    d.songs.push({ title, artist, url });
+    await window.KIC.setSiteData(d);
+    document.getElementById('songTitle').value  = '';
+    document.getElementById('songArtist').value = '';
+    document.getElementById('songUrl').value    = '';
+    toast('✓ Song added permanently');
+    renderSongList(d);
+    renderStats();
+  }
+  function renderSongList(d) {
+    const el = document.getElementById('songList');
+    if (!el) return;
+    const songs = (d.songs||[]).filter(s=>s.title);
+    if (!songs.length) { el.innerHTML = '<p class="note">No extra songs yet.</p>'; return; }
+    el.innerHTML = songs.map((s, i) => `
+      <div class="list-item">
+        <div class="list-item-body"><strong>${s.title}</strong><span>${s.artist||''}</span></div>
+        <button class="btn-delete" onclick="deleteSong(${i})">Delete</button>
+      </div>`).join('');
+  }
+  async function deleteSong(i) {
+    const d = await window.KIC.getSiteData();
+    d.songs.splice(i, 1);
+    await window.KIC.setSiteData(d);
+    toast('Deleted');
+    renderSongList(d);
+  }
+
+  // ── STRUCTURES ──
+  function renderStructureSelect(d) {
+    const sel = document.getElementById('structureSelect');
+    sel.innerHTML = (d.structures||[]).map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+  }
+  async function loadStructureDetails() {
+    const d = await window.KIC.getSiteData();
+    const name = document.getElementById('structureSelect').value;
+    const s = d.structures.find(x => x.name === name) || d.structures[0] || {};
+    document.getElementById('structureName').value    = s.name || '';
+    document.getElementById('structureImageUrl').value = typeof s.image === 'string' && !s.image.startsWith('data:') ? s.image : '';
+    document.getElementById('structureMembers').value = (s.members||[]).map(m => `${m.name} - ${m.role}`).join('\n');
+    const prev = document.getElementById('structureImgPreview');
+    prev.innerHTML = s.image ? `<img src="${s.image}" style="max-width:260px;border-radius:8px;margin-top:0.5rem;border:1px solid rgba(255,255,255,0.1)"/>` : '';
+  }
+  async function previewStructureImg() {
+    const img = await readFile(document.getElementById('structureImageFile'));
+    document.getElementById('structureImgPreview').innerHTML = img ? `<img src="${img}" style="max-width:260px;border-radius:8px;margin-top:0.5rem;"/>` : '';
+  }
+  async function saveStructure() {
+    const origName = document.getElementById('structureSelect').value;
+    const name = document.getElementById('structureName').value.trim();
+    if (!name) { toast('⚠ Name required'); return; }
+    const uploaded = await readFile(document.getElementById('structureImageFile'));
+    const urlVal   = document.getElementById('structureImageUrl').value.trim();
+    const members  = document.getElementById('structureMembers').value.trim().split('\n').map(l => { const [n, r] = l.split(' - '); return { name:(n||'').trim(), role:(r||'Member').trim() }; }).filter(m => m.name);
+    const d = await window.KIC.getSiteData();
+    const idx = d.structures.findIndex(s => s.name === origName);
+    const updated = { name, image: uploaded || urlVal || '', members };
+    if (idx >= 0) d.structures[idx] = updated; else d.structures.push(updated);
+    await window.KIC.setSiteData(d);
+    document.getElementById('structureImageFile').value = '';
+    toast('✓ Structure saved permanently');
+    renderStructureSelect(d);
+    document.getElementById('structureSelect').value = name;
+  }
+
+  // ── CALENDAR ──
+  async function addCalEvent() {
+    const title = document.getElementById('calTitle').value.trim();
+    if (!title) { toast('⚠ Title required'); return; }
+    const d = await window.KIC.getSiteData();
+    d.calendar = d.calendar || { month:'', events:[] };
+    d.calendar.month = document.getElementById('calMonth').value.trim() || d.calendar.month;
+    d.calendar.events.push({ title, date: document.getElementById('calDay').value.trim(), time: document.getElementById('calTime').value, location: document.getElementById('calLocation').value.trim(), description: document.getElementById('calDesc').value.trim() });
+    await window.KIC.setSiteData(d);
+    ['calTitle','calDay','calLocation','calDesc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('calTime').value = '';
+    toast('✓ Event saved permanently');
+    renderCalList(d);
+    renderStats();
+  }
+  function renderCalList(d) {
+    const el = document.getElementById('calList');
+    if (!el) return;
+    const evs = d.calendar?.events || [];
+    if (!evs.length) { el.innerHTML = '<p class="note">No events yet.</p>'; return; }
+    el.innerHTML = evs.map((e, i) => `
+      <div class="list-item">
+        <div class="list-item-body">
+          <strong>${e.title}</strong>
+          <span>${e.date||''} ${e.time ? '· '+e.time : ''} ${e.location ? '· '+e.location : ''}</span>
+        </div>
+        <button class="btn-delete" onclick="deleteCalEvent(${i})">Delete</button>
+      </div>`).join('');
+  }
+  async function deleteCalEvent(i) {
+    const d = await window.KIC.getSiteData();
+    d.calendar.events.splice(i, 1);
+    await window.KIC.setSiteData(d);
+    toast('Deleted');
+    renderCalList(d);
+    renderStats();
+  }
+
+  // ── CONTACT ──
+  function fillContact(d) {
+    document.getElementById('ciAddress').value  = d.contact.address  || '';
+    document.getElementById('ciPhone').value    = d.contact.phone    || '';
+    document.getElementById('ciEmail').value    = d.contact.email    || '';
+    document.getElementById('ciWhatsApp').value = d.contact.whatsapp || '';
+    document.getElementById('ciTimes').value    = d.contact.times    || '';
+  }
+  async function saveContact() {
+    const d = await window.KIC.getSiteData();
+    d.contact = { ...d.contact,
+      address:  document.getElementById('ciAddress').value.trim(),
+      phone:    document.getElementById('ciPhone').value.trim(),
+      email:    document.getElementById('ciEmail').value.trim(),
+      whatsapp: document.getElementById('ciWhatsApp').value.trim(),
+      times:    document.getElementById('ciTimes').value.trim()
+    };
+    await window.KIC.setSiteData(d);
+    toast('✓ Contact info saved permanently');
+  }
+
+  // ── GIVING ──
+  function fillGiving(d) {
+    document.getElementById('titheBank').value      = d.giving?.tithe?.bank      || '';
+    document.getElementById('titheAccount').value   = d.giving?.tithe?.account   || '';
+    document.getElementById('offeringBank').value   = d.giving?.offering?.bank   || '';
+    document.getElementById('offeringAccount').value= d.giving?.offering?.account|| '';
+  }
+  async function saveGiving() {
+    const d = await window.KIC.getSiteData();
+    d.giving = { tithe: { bank: document.getElementById('titheBank').value.trim(), account: document.getElementById('titheAccount').value.trim() }, offering: { bank: document.getElementById('offeringBank').value.trim(), account: document.getElementById('offeringAccount').value.trim() } };
+    await window.KIC.setSiteData(d);
+    toast('✓ Giving info saved permanently');
+  }
+
+  // ── SERVICES ──
+  async function addChooseWord() {
+    const title = document.getElementById('cwTitle').value.trim();
+    const desc  = document.getElementById('cwDesc').value.trim();
+    if (!title||!desc) { toast('⚠ Title and description required'); return; }
+    const image = await readFile(document.getElementById('cwImageFile'));
+    const d = await window.KIC.getSiteData();
+    d.services.chooseWord.push({ title, description: desc, image: image||'' });
+    await window.KIC.setSiteData(d);
+    document.getElementById('cwTitle').value = ''; document.getElementById('cwDesc').value = ''; document.getElementById('cwImageFile').value = '';
+    toast('✓ Choose Word service saved permanently');
+    renderServices(d);
+  }
+  async function addSundayService() {
+    const title = document.getElementById('sunTitle').value.trim();
+    const desc  = document.getElementById('sunDesc').value.trim();
+    if (!title||!desc) { toast('⚠ Title and description required'); return; }
+    const image = await readFile(document.getElementById('sunImageFile'));
+    const d = await window.KIC.getSiteData();
+    d.services.sunday.push({ title, description: desc, image: image||'' });
+    await window.KIC.setSiteData(d);
+    document.getElementById('sunTitle').value = ''; document.getElementById('sunDesc').value = ''; document.getElementById('sunImageFile').value = '';
+    toast('✓ Sunday service saved permanently');
+    renderServices(d);
+  }
+  function renderServices(d) {
+    const cwEl  = document.getElementById('cwList');
+    const sunEl = document.getElementById('sunList');
+    if (cwEl)  cwEl.innerHTML  = (d.services?.chooseWord||[]).map((s,i) => `<div class="list-item"><div class="list-item-body"><strong>${s.title}</strong><span>${s.description}</span></div><button class="btn-delete" onclick="delService('chooseWord',${i})">Delete</button></div>`).join('') || '<p class="note">None yet.</p>';
+    if (sunEl) sunEl.innerHTML = (d.services?.sunday||[]).map((s,i) => `<div class="list-item"><div class="list-item-body"><strong>${s.title}</strong><span>${s.description}</span></div><button class="btn-delete" onclick="delService('sunday',${i})">Delete</button></div>`).join('') || '<p class="note">None yet.</p>';
+  }
+  async function delService(type, i) {
+    const d = await window.KIC.getSiteData();
+    d.services[type].splice(i, 1);
+    await window.KIC.setSiteData(d);
+    toast('Deleted');
+    renderServices(d);
+  }
+
+  function esc(s) { return String(s).replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>

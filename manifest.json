@@ -1,0 +1,16 @@
+﻿{
+  "name": "Kingdom Impactors Church",
+  "short_name": "KIC",
+  "start_url": "Home.html",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#F5C842",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "KIC-Logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
