@@ -266,34 +266,13 @@
         </div>
 
         <div class="admin-card" style="border-color:rgba(245,200,66,0.35);">
-          <h3>🌐 Publish to All Devices</h3>
-          <p class="note" style="margin-bottom:1.25rem;">
-            Because this site has no backend, content saved here only lives on <em>this device</em>. 
-            To make changes visible on phones and other devices, export your data and upload it to GitHub.
+          <h3>🌐 Live Sync — All Devices</h3>
+          <p class="note">
+            This site uses <strong style="color:var(--yellow);">Firebase</strong> as its database. 
+            Every change you save here is instantly visible on all phones, tablets and computers — no exporting needed.
           </p>
-
-          <div style="display:grid;gap:1rem;">
-            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1.25rem;">
-              <strong style="color:var(--yellow);display:block;margin-bottom:0.4rem;">Step 1 — Export</strong>
-              <p class="note" style="margin-bottom:0.85rem;">Download your current site content as <code>data.json</code>.</p>
-              <button class="btn-save" onclick="exportData()" style="width:100%;">⬇ Export data.json</button>
-            </div>
-
-            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1.25rem;">
-              <strong style="color:var(--yellow);display:block;margin-bottom:0.4rem;">Step 2 — Upload to GitHub</strong>
-              <p class="note" style="margin-bottom:0.85rem;">
-                Go to your GitHub repo → click <strong>Add file → Upload files</strong> → drag in the <code>data.json</code> file → 
-                click <strong>Commit changes</strong>. Netlify will auto-redeploy in ~30 seconds.
-              </p>
-              <a href="https://github.com/Austin-ZA/KIC-Website" target="_blank" class="btn-save" style="display:block;text-align:center;background:rgba(255,255,255,0.08);color:var(--text);">Open GitHub Repo ↗</a>
-            </div>
-
-            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1.25rem;">
-              <strong style="color:var(--yellow);display:block;margin-bottom:0.4rem;">Import (restore from file)</strong>
-              <p class="note" style="margin-bottom:0.85rem;">Load a previously exported <code>data.json</code> into this device's local storage.</p>
-              <input type="file" id="importFile" accept=".json" style="margin-bottom:0.75rem;" />
-              <button class="btn-save" onclick="importData()" style="width:100%;background:rgba(255,255,255,0.08);color:var(--text);">⬆ Import data.json</button>
-            </div>
+          <div id="firebaseStatus" style="margin-top:1rem;padding:0.85rem 1rem;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);font-size:0.9rem;">
+            ⏳ Checking Firebase connection...
           </div>
         </div>
       </div>
@@ -875,30 +854,22 @@
 
   function esc(s) { return String(s).replace(/"/g,'&quot;'); }
 
-  // ── EXPORT ──
-  async function exportData() {
-    const d = await window.KIC.getSiteData();
-    const json = JSON.stringify(d, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = 'data.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast('✓ data.json exported — now upload it to GitHub');
-  }
-
-  // ── IMPORT ──
-  async function importData() {
-    const file = document.getElementById('importFile').files[0];
-    if (!file) { toast('⚠ Please choose a data.json file first'); return; }
-    const text = await file.text();
-    let parsed;
-    try { parsed = JSON.parse(text); } catch { toast('✗ Invalid JSON file'); return; }
-    await window.KIC.setSiteData(parsed);
-    toast('✓ Data imported — all content restored');
-    location.reload();
+  // ── FIREBASE STATUS CHECK ──
+  async function checkFirebaseStatus() {
+    const el = document.getElementById('firebaseStatus');
+    if (!el) return;
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(window.KIC ? undefined : {});
+      const db = firebase.firestore();
+      await db.collection('kic').doc('siteData').get();
+      el.innerHTML = '✅ Firebase connected — changes save instantly to all devices.';
+      el.style.borderColor = 'rgba(100,220,100,0.3)';
+      el.style.color = '#a0f0a0';
+    } catch (e) {
+      el.innerHTML = '⚠️ Firebase not configured yet. See setup instructions above.';
+      el.style.borderColor = 'rgba(255,180,0,0.3)';
+      el.style.color = '#ffd080';
+    }
   }
 </script>
 </body>

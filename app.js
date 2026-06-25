@@ -1,93 +1,75 @@
 /**
  * KIC — Kingdom Impactors Church
- * Persistence layer: IndexedDB (permanent) + localStorage (fast read cache)
- * Admin writes to IndexedDB → syncs to localStorage → homepage reads from localStorage/IndexedDB
- * Data survives browser restarts, storage clears, and PWA reinstalls.
+ * Data layer: Firebase Firestore (all devices read/write the same data)
+ * Falls back to localStorage if offline.
  */
 
-const DB_NAME    = 'kicDB';
-const DB_VERSION = 1;
-const STORE_NAME = 'siteData';
-const RECORD_KEY = 'kic_site_content_v1';
+// ─── Firebase config ──────────────────────────────────────────────────────────
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDlx8ld130xmQkzfkppgtKjtEz_ZntAnos",
+  authDomain:        "kic-website-8e18d.firebaseapp.com",
+  projectId:         "kic-website-8e18d",
+  storageBucket:     "kic-website-8e18d.firebasestorage.app",
+  messagingSenderId: "247156963209",
+  appId:             "1:247156963209:web:401cf4af2a3cc991d4d358"
+};
+
 const LS_KEY     = 'kic_site_content_v1';
 const LS_UPDATED = 'kic_site_content_updated_at';
 
-// ─── IndexedDB helpers ────────────────────────────────────────────────────────
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
-      }
-    };
-    req.onsuccess = (e) => resolve(e.target.result);
-    req.onerror   = (e) => reject(e.target.error);
-  });
+// ─── Firebase init ────────────────────────────────────────────────────────────
+let _db = null;
+
+function getDB() {
+  if (_db) return _db;
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  _db = firebase.firestore();
+  return _db;
 }
 
-async function idbGet() {
+// ─── Firestore read ───────────────────────────────────────────────────────────
+async function firestoreGet() {
   try {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx  = db.transaction(STORE_NAME, 'readonly');
-      const req = tx.objectStore(STORE_NAME).get(RECORD_KEY);
-      req.onsuccess = (e) => resolve(e.target.result || null);
-      req.onerror   = (e) => reject(e.target.error);
-    });
-  } catch { return null; }
-}
-
-async function idbSet(data) {
-  try {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx  = db.transaction(STORE_NAME, 'readwrite');
-      const req = tx.objectStore(STORE_NAME).put(data, RECORD_KEY);
-      req.onsuccess = () => resolve(true);
-      req.onerror   = (e) => reject(e.target.error);
-    });
-  } catch { return false; }
-}
-
-// ─── Read: remote data.json → IndexedDB → localStorage ───────────────────────
-async function fetchRemoteData() {
-  try {
-    const res = await fetch('data.json?v=' + Date.now(), { cache: 'no-store' });
-    if (!res.ok) return null;
-    const json = await res.json();
-    // If remote data exists, sync it into IndexedDB + localStorage so it's available offline
-    if (json && typeof json === 'object' && Object.keys(json).length > 0) {
-      await idbSet(json);
-      try { localStorage.setItem(LS_KEY, JSON.stringify(json)); localStorage.setItem(LS_UPDATED, String(Date.now())); } catch {}
-      return json;
-    }
+    const snap = await getDB().collection('kic').doc('siteData').get();
+    return snap.exists ? snap.data() : null;
+  } catch (e) {
+    console.warn('Firestore read failed, using local cache:', e.message);
     return null;
-  } catch { return null; }
-}
-
-async function loadPersistedData() {
-  // Try remote first (makes all devices see the same published content)
-  const remote = await fetchRemoteData();
-  if (remote) return remote;
-  // Fall back to local IndexedDB
-  let data = await idbGet();
-  if (!data) {
-    try { data = JSON.parse(localStorage.getItem(LS_KEY)) || null; } catch { data = null; }
   }
-  return data || {};
 }
 
-// ─── Write: IndexedDB + localStorage cache ─────────────────────────────────────
+// ─── Firestore write ──────────────────────────────────────────────────────────
+async function firestoreSet(data) {
+  try {
+    await getDB().collection('kic').doc('siteData').set(data);
+    return true;
+  } catch (e) {
+    console.warn('Firestore write failed:', e.message);
+    return false;
+  }
+}
+
+// ─── Read: Firestore → localStorage fallback ──────────────────────────────────
+async function loadPersistedData() {
+  const remote = await firestoreGet();
+  if (remote && Object.keys(remote).length > 0) {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(remote));
+      localStorage.setItem(LS_UPDATED, String(Date.now()));
+    } catch {}
+    return remote;
+  }
+  // Offline fallback
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; }
+}
+
+// ─── Write: Firestore + localStorage cache ────────────────────────────────────
 async function savePersistedData(data) {
-  await idbSet(data);
+  await firestoreSet(data);
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(data));
     localStorage.setItem(LS_UPDATED, String(Date.now()));
-  } catch (e) {
-    console.warn('localStorage write failed (quota?), IndexedDB still saved.', e);
-  }
+  } catch {}
 }
 
 // ─── Default content ──────────────────────────────────────────────────────────
@@ -322,7 +304,7 @@ function renderCountdown() {
     const h = Math.floor((diff / 3600000) % 24);
     const m = Math.floor((diff / 60000) % 60);
     const s = Math.floor((diff / 1000) % 60);
-    el.textContent = `${String(d).padStart(2,'0')}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+    el.textContent = `${String(d).padStart(2,'0')}d ${String(h).padStart(2,'00')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
   };
   tick();
   if (window._kicCountdown) clearInterval(window._kicCountdown);
@@ -420,15 +402,6 @@ function renderAll() {
   renderGivingDetails();
   renderServicePanels();
 }
-
-// ─── Cross-tab live sync ──────────────────────────────────────────────────────
-window.addEventListener('storage', async (e) => {
-  if (e.key === LS_UPDATED || e.key === LS_KEY) {
-    const saved = await loadPersistedData();
-    Object.assign(siteData, mergeData(saved));
-    renderAll();
-  }
-});
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 initSiteData();
