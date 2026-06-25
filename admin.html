@@ -248,8 +248,7 @@
       </div>
 
       <div class="persist-note" style="margin:1.5rem 2rem 0;">
-        <strong>💾 Permanent Storage Active</strong> — All changes are saved to IndexedDB in the browser.
-        Data persists forever across sessions, restarts and refreshes. No backend required.
+        <strong>☁️ Firebase Sync Active</strong> — All changes save instantly to Firebase and reflect on every device automatically.
       </div>
 
       <!-- DASHBOARD -->
@@ -258,8 +257,8 @@
         <div class="admin-card">
           <h3>📋 Quick Guide</h3>
           <p class="note">
-            Use the sidebar to manage all content. Every save is stored permanently in IndexedDB — it will remain after browser restarts,
-            closing tabs, or clearing cookies. The homepage reads from the same store and updates live.
+            Use the sidebar to manage all content. Every save goes directly to Firebase — 
+            changes appear instantly on all phones, tablets and computers with no extra steps needed.
             <br/><br/>
             <strong style="color:var(--yellow);">Images</strong> uploaded in the admin are stored as base64 directly in the database — no hosting needed.
           </p>
@@ -373,9 +372,9 @@
           <input type="text" id="calMonth" placeholder="e.g. July 2026"/>
           <label class="field-label">Event Title *</label>
           <input type="text" id="calTitle" placeholder="Sunday Celebration Service"/>
-          <label class="field-label">Day / Date</label>
+          <label class="field-label">Specific Date (use date picker)</label>
           <input type="date" id="calDay" />
-          <small style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-top:0.25rem;display:block;">For a specific date use the picker above. For a recurring weekly event, clear the date and type the day name below (e.g. Sunday).</small>
+          <small style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-top:0.25rem;display:block;">For a recurring weekly event, leave the date empty and type the day name below (e.g. Sunday).</small>
           <input type="text" id="calDayRecurring" placeholder="e.g. Sunday (for weekly recurring)" style="margin-top:0.5rem;"/>
           <label class="field-label">Time</label>
           <input type="time" id="calTime"/>
@@ -455,10 +454,13 @@
   </div><!-- /shell -->
 </div><!-- /dashboardScreen -->
 
-<div class="toast" id="toast">✓ Saved permanently</div>
+<div class="toast" id="toast">✓ Saved</div>
 
-<!-- app.js must load first to initialise window.KIC -->
+<!-- Firebase SDK MUST load before app.js -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="app.js"></script>
+
 <script>
   const ADMIN_PASSWORD = 'KIC2026!';
 
@@ -499,7 +501,7 @@
   }
 
   // ── TOAST ──
-  function toast(msg = '✓ Saved permanently') {
+  function toast(msg = '✓ Saved') {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2800);
@@ -522,6 +524,7 @@
   async function initDashboard() {
     await renderStats();
     loadPanel('dashboard');
+    checkFirebaseStatus();
   }
 
   async function renderStats() {
@@ -562,7 +565,7 @@
     document.getElementById('annDate').value  = '';
     document.getElementById('annFile').value  = '';
     document.getElementById('annImgPreview').innerHTML = '';
-    toast('✓ Announcement saved permanently');
+    toast('✓ Announcement saved — visible on all devices');
     renderAnnList(d);
     renderStats();
   }
@@ -604,7 +607,7 @@
     document.getElementById('serSpeaker').value = '';
     document.getElementById('serDesc').value    = '';
     document.getElementById('serLink').value    = '';
-    toast('✓ Sermon saved permanently');
+    toast('✓ Sermon saved — visible on all devices');
     renderSerList(d);
     renderStats();
   }
@@ -657,11 +660,10 @@
     for (let i = 0; i < 5; i++) {
       slots.push({ title: document.getElementById(`st-${i}`).value.trim(), artist: document.getElementById(`sa-${i}`).value.trim(), url: document.getElementById(`su-${i}`).value.trim() });
     }
-    // preserve extra songs beyond 5
     const extras = (d.songs || []).slice(5);
     d.songs = [...slots, ...extras];
     await window.KIC.setSiteData(d);
-    toast('✓ Songs saved permanently');
+    toast('✓ Songs saved — visible on all devices');
     renderStats();
   }
   async function addSong() {
@@ -676,7 +678,7 @@
     document.getElementById('songTitle').value  = '';
     document.getElementById('songArtist').value = '';
     document.getElementById('songUrl').value    = '';
-    toast('✓ Song added permanently');
+    toast('✓ Song added — visible on all devices');
     renderSongList(d);
     renderStats();
   }
@@ -731,7 +733,7 @@
     if (idx >= 0) d.structures[idx] = updated; else d.structures.push(updated);
     await window.KIC.setSiteData(d);
     document.getElementById('structureImageFile').value = '';
-    toast('✓ Structure saved permanently');
+    toast('✓ Structure saved — visible on all devices');
     renderStructureSelect(d);
     document.getElementById('structureSelect').value = name;
   }
@@ -743,15 +745,15 @@
     const d = await window.KIC.getSiteData();
     d.calendar = d.calendar || { month:'', events:[] };
     d.calendar.month = document.getElementById('calMonth').value.trim() || d.calendar.month;
-    const calDateVal = document.getElementById('calDay').value.trim();
-    const calRecurVal = (document.getElementById('calDayRecurring')?.value || '').trim();
+    const calDateVal   = document.getElementById('calDay').value.trim();
+    const calRecurVal  = (document.getElementById('calDayRecurring')?.value || '').trim();
     const calDateFinal = calDateVal || calRecurVal;
-    if (!calDateFinal) { alert('Please enter a date or a recurring day name.'); return; }
+    if (!calDateFinal) { toast('⚠ Please enter a date or a recurring day name'); return; }
     d.calendar.events.push({ title, date: calDateFinal, time: document.getElementById('calTime').value, location: document.getElementById('calLocation').value.trim(), description: document.getElementById('calDesc').value.trim() });
     await window.KIC.setSiteData(d);
     ['calTitle','calDay','calDayRecurring','calLocation','calDesc'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     document.getElementById('calTime').value = '';
-    toast('✓ Event saved permanently');
+    toast('✓ Event saved — visible on all devices');
     renderCalList(d);
     renderStats();
   }
@@ -796,7 +798,7 @@
       times:    document.getElementById('ciTimes').value.trim()
     };
     await window.KIC.setSiteData(d);
-    toast('✓ Contact info saved permanently');
+    toast('✓ Contact info saved — visible on all devices');
   }
 
   // ── GIVING ──
@@ -810,7 +812,7 @@
     const d = await window.KIC.getSiteData();
     d.giving = { tithe: { bank: document.getElementById('titheBank').value.trim(), account: document.getElementById('titheAccount').value.trim() }, offering: { bank: document.getElementById('offeringBank').value.trim(), account: document.getElementById('offeringAccount').value.trim() } };
     await window.KIC.setSiteData(d);
-    toast('✓ Giving info saved permanently');
+    toast('✓ Giving info saved — visible on all devices');
   }
 
   // ── SERVICES ──
@@ -823,7 +825,7 @@
     d.services.chooseWord.push({ title, description: desc, image: image||'' });
     await window.KIC.setSiteData(d);
     document.getElementById('cwTitle').value = ''; document.getElementById('cwDesc').value = ''; document.getElementById('cwImageFile').value = '';
-    toast('✓ Choose Word service saved permanently');
+    toast('✓ Service saved — visible on all devices');
     renderServices(d);
   }
   async function addSundayService() {
@@ -835,7 +837,7 @@
     d.services.sunday.push({ title, description: desc, image: image||'' });
     await window.KIC.setSiteData(d);
     document.getElementById('sunTitle').value = ''; document.getElementById('sunDesc').value = ''; document.getElementById('sunImageFile').value = '';
-    toast('✓ Sunday service saved permanently');
+    toast('✓ Service saved — visible on all devices');
     renderServices(d);
   }
   function renderServices(d) {
@@ -859,16 +861,15 @@
     const el = document.getElementById('firebaseStatus');
     if (!el) return;
     try {
-      if (!firebase.apps.length) firebase.initializeApp(window.KIC ? undefined : {});
       const db = firebase.firestore();
       await db.collection('kic').doc('siteData').get();
       el.innerHTML = '✅ Firebase connected — changes save instantly to all devices.';
       el.style.borderColor = 'rgba(100,220,100,0.3)';
       el.style.color = '#a0f0a0';
     } catch (e) {
-      el.innerHTML = '⚠️ Firebase not configured yet. See setup instructions above.';
-      el.style.borderColor = 'rgba(255,180,0,0.3)';
-      el.style.color = '#ffd080';
+      el.innerHTML = `⚠️ Firebase error: ${e.message}`;
+      el.style.borderColor = 'rgba(255,100,100,0.3)';
+      el.style.color = '#f87171';
     }
   }
 </script>
