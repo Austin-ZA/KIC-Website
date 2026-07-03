@@ -368,8 +368,7 @@
       <div class="panel" id="panel-calendar">
         <div class="admin-card">
           <h3>🗓️ Add Calendar Event</h3>
-          <label class="field-label">Month Label</label>
-          <input type="text" id="calMonth" placeholder="e.g. July 2026"/>
+          <small style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-top:0.25rem;display:block;">The calendar always shows the real current month automatically — you don't need to set anything for that.</small>
           <label class="field-label">Event Title *</label>
           <input type="text" id="calTitle" placeholder="Sunday Celebration Service"/>
           <label class="field-label">Specific Date (use date picker)</label>
@@ -507,17 +506,48 @@
     setTimeout(() => t.classList.remove('show'), 2800);
   }
 
-  // ── FILE READ ──
-  function readFile(input) {
+  // ── FILE READ (resized + compressed so we don't blow Firestore's 1MB document limit) ──
+  function readFile(input, maxDim = 900, quality = 0.72) {
     return new Promise((res) => {
       if (!input || !input.files || !input.files[0]) return res(null);
       const f = input.files[0];
       if (!f.type.startsWith('image/')) return res(null);
       const r = new FileReader();
-      r.onload = () => res(r.result);
+      r.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width >= height) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+            else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          res(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => res(r.result); // fall back to the original if resizing fails
+        img.src = r.result;
+      };
       r.onerror = () => res(null);
       r.readAsDataURL(f);
     });
+  }
+
+  // ── SAVE + SURFACE REAL ERRORS (Firestore writes used to fail silently, which is
+  //    why some structure edits/photos looked "saved" locally but reverted later) ──
+  async function persistData(d) {
+    const ok = await window.KIC.setSiteData(d);
+    if (!ok) {
+      const reason = window.KIC.lastSaveError || '';
+      const hint = /longer than|exceeds|too large|invalid-argument/i.test(reason)
+        ? ' The photo is likely too large — try a smaller image.'
+        : '';
+      toast(`⚠ Save failed — changes were NOT saved to the server.${hint}`);
+      throw new Error('KIC save failed: ' + reason);
+    }
+    return ok;
   }
 
   // ── INIT ──
@@ -559,7 +589,7 @@
     const image = await readFile(document.getElementById('annFile'));
     const d = await window.KIC.getSiteData();
     d.announcements.unshift({ title, body, date: document.getElementById('annDate').value.trim(), category: document.getElementById('annCat').value, image: image || '' });
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     document.getElementById('annTitle').value = '';
     document.getElementById('annBody').value  = '';
     document.getElementById('annDate').value  = '';
@@ -590,7 +620,7 @@
   async function deleteAnnouncement(i) {
     const d = await window.KIC.getSiteData();
     d.announcements.splice(i, 1);
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     toast('Deleted');
     renderAnnList(d);
     renderStats();
@@ -602,7 +632,7 @@
     if (!title) { toast('⚠ Title required'); return; }
     const d = await window.KIC.getSiteData();
     d.sermons.unshift({ title, speaker: document.getElementById('serSpeaker').value.trim(), description: document.getElementById('serDesc').value.trim(), link: document.getElementById('serLink').value.trim() });
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     document.getElementById('serTitle').value   = '';
     document.getElementById('serSpeaker').value = '';
     document.getElementById('serDesc').value    = '';
@@ -628,7 +658,7 @@
   async function deleteSermon(i) {
     const d = await window.KIC.getSiteData();
     d.sermons.splice(i, 1);
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     toast('Deleted');
     renderSerList(d);
     renderStats();
@@ -662,7 +692,7 @@
     }
     const extras = (d.songs || []).slice(5);
     d.songs = [...slots, ...extras];
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     toast('✓ Songs saved — visible on all devices');
     renderStats();
   }
@@ -674,7 +704,7 @@
     const d = await window.KIC.getSiteData();
     d.songs = d.songs || [];
     d.songs.push({ title, artist, url });
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     document.getElementById('songTitle').value  = '';
     document.getElementById('songArtist').value = '';
     document.getElementById('songUrl').value    = '';
@@ -696,7 +726,7 @@
   async function deleteSong(i) {
     const d = await window.KIC.getSiteData();
     d.songs.splice(i, 1);
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     toast('Deleted');
     renderSongList(d);
   }
@@ -731,7 +761,7 @@
     const idx = d.structures.findIndex(s => s.name === origName);
     const updated = { name, image: uploaded || urlVal || '', members };
     if (idx >= 0) d.structures[idx] = updated; else d.structures.push(updated);
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     document.getElementById('structureImageFile').value = '';
     toast('✓ Structure saved — visible on all devices');
     renderStructureSelect(d);
@@ -744,13 +774,12 @@
     if (!title) { toast('⚠ Title required'); return; }
     const d = await window.KIC.getSiteData();
     d.calendar = d.calendar || { month:'', events:[] };
-    d.calendar.month = document.getElementById('calMonth').value.trim() || d.calendar.month;
     const calDateVal   = document.getElementById('calDay').value.trim();
     const calRecurVal  = (document.getElementById('calDayRecurring')?.value || '').trim();
     const calDateFinal = calDateVal || calRecurVal;
     if (!calDateFinal) { toast('⚠ Please enter a date or a recurring day name'); return; }
     d.calendar.events.push({ title, date: calDateFinal, time: document.getElementById('calTime').value, location: document.getElementById('calLocation').value.trim(), description: document.getElementById('calDesc').value.trim() });
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     ['calTitle','calDay','calDayRecurring','calLocation','calDesc'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     document.getElementById('calTime').value = '';
     toast('✓ Event saved — visible on all devices');
@@ -774,7 +803,7 @@
   async function deleteCalEvent(i) {
     const d = await window.KIC.getSiteData();
     d.calendar.events.splice(i, 1);
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     toast('Deleted');
     renderCalList(d);
     renderStats();
@@ -797,7 +826,7 @@
       whatsapp: document.getElementById('ciWhatsApp').value.trim(),
       times:    document.getElementById('ciTimes').value.trim()
     };
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     toast('✓ Contact info saved — visible on all devices');
   }
 
@@ -811,7 +840,7 @@
   async function saveGiving() {
     const d = await window.KIC.getSiteData();
     d.giving = { tithe: { bank: document.getElementById('titheBank').value.trim(), account: document.getElementById('titheAccount').value.trim() }, offering: { bank: document.getElementById('offeringBank').value.trim(), account: document.getElementById('offeringAccount').value.trim() } };
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     toast('✓ Giving info saved — visible on all devices');
   }
 
@@ -823,7 +852,7 @@
     const image = await readFile(document.getElementById('cwImageFile'));
     const d = await window.KIC.getSiteData();
     d.services.chooseWord.push({ title, description: desc, image: image||'' });
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     document.getElementById('cwTitle').value = ''; document.getElementById('cwDesc').value = ''; document.getElementById('cwImageFile').value = '';
     toast('✓ Service saved — visible on all devices');
     renderServices(d);
@@ -835,7 +864,7 @@
     const image = await readFile(document.getElementById('sunImageFile'));
     const d = await window.KIC.getSiteData();
     d.services.sunday.push({ title, description: desc, image: image||'' });
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     document.getElementById('sunTitle').value = ''; document.getElementById('sunDesc').value = ''; document.getElementById('sunImageFile').value = '';
     toast('✓ Service saved — visible on all devices');
     renderServices(d);
@@ -849,7 +878,7 @@
   async function delService(type, i) {
     const d = await window.KIC.getSiteData();
     d.services[type].splice(i, 1);
-    await window.KIC.setSiteData(d);
+    await persistData(d);
     toast('Deleted');
     renderServices(d);
   }

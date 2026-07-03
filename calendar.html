@@ -26,29 +26,16 @@
       const container = document.getElementById('calendarContainer');
       const calendar = data.calendar || {};
 
-      // Determine display month/year
       function monthNameToIndex(name){
         return ['january','february','march','april','may','june','july','august','september','october','november','december'].indexOf(name.toLowerCase());
       }
 
-      let monthIndex, year;
-      if (calendar.month) {
-        const parts = calendar.month.trim().split(' ');
-        if (parts.length >= 2) {
-          const maybeYear = parseInt(parts[parts.length-1], 10);
-          const maybeMonth = parts.slice(0, parts.length-1).join(' ');
-          const idx = monthNameToIndex(maybeMonth);
-          if (!isNaN(maybeYear) && idx >= 0) {
-            monthIndex = idx;
-            year = maybeYear;
-          }
-        }
-      }
+      // Always show the real current month/year. (The admin "Month Label" field
+      // used to override this, which is why the calendar could get stuck on a
+      // past month if it was ever typed in and never updated.)
       const today = new Date();
-      if (typeof monthIndex === 'undefined' || typeof year === 'undefined') {
-        monthIndex = today.getMonth();
-        year = today.getFullYear();
-      }
+      const monthIndex = today.getMonth();
+      const year = today.getFullYear();
 
       // parse admin event dates into YYYY-MM-DD keys and recurring weekdays
       const events = (calendar.events || []).slice();

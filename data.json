@@ -177,6 +177,26 @@
           "role": "Intercessor"
         }
       ]
+    },
+    {
+      "name": "Announcement Team",
+      "image": "",
+      "members": [
+        {
+          "name": "TBC",
+          "role": "Team Lead"
+        }
+      ]
+    },
+    {
+      "name": "Couples Connect",
+      "image": "",
+      "members": [
+        {
+          "name": "TBC",
+          "role": "Team Lead"
+        }
+      ]
     }
   ],
   "calendar": {

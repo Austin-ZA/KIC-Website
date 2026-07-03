@@ -39,12 +39,15 @@ async function firestoreGet() {
 }
 
 // ─── Firestore write ──────────────────────────────────────────────────────────
+let _lastWriteError = null;
 async function firestoreSet(data) {
   try {
     await getDB().collection('kic').doc('siteData').set(data);
+    _lastWriteError = null;
     return true;
   } catch (e) {
     console.warn('Firestore write failed:', e.message);
+    _lastWriteError = e.message || String(e);
     return false;
   }
 }
@@ -65,11 +68,12 @@ async function loadPersistedData() {
 
 // ─── Write: Firestore + localStorage cache ────────────────────────────────────
 async function savePersistedData(data) {
-  await firestoreSet(data);
+  const ok = await firestoreSet(data);
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(data));
     localStorage.setItem(LS_UPDATED, String(Date.now()));
   } catch {}
+  return ok;
 }
 
 // ─── Default content ──────────────────────────────────────────────────────────
@@ -107,7 +111,9 @@ const defaultData = {
     { name: 'Media Team', image: '', members: [{ name: 'Tebo', role: 'Production' }, { name: 'Zandi', role: 'Social Media' }] },
     { name: 'Worship Team', image: 'WorshipTeam.jpeg', members: [{ name: 'Pastor Gift', role: 'Worship Leader' }, { name: 'Choir', role: 'Vocal Team' }] },
     { name: 'Ushers', image: '', members: [{ name: 'Samuel', role: 'Head Usher' }, { name: 'Leah', role: 'Usher' }] },
-    { name: 'Intercessors', image: '', members: [{ name: 'Nandi', role: 'Head Intercessor' }, { name: 'Moses', role: 'Intercessor' }] }
+    { name: 'Intercessors', image: '', members: [{ name: 'Nandi', role: 'Head Intercessor' }, { name: 'Moses', role: 'Intercessor' }] },
+    { name: 'Announcement Team', image: '', members: [{ name: 'TBC', role: 'Team Lead' }] },
+    { name: 'Couples Connect', image: '', members: [{ name: 'TBC', role: 'Team Lead' }] }
   ],
   calendar: { month: '', events: [] },
   giving: {
@@ -413,13 +419,15 @@ window.KIC = {
   mergeData,
   defaultData,
   get siteData() { return siteData; },
+  get lastSaveError() { return _lastWriteError; },
   async getSiteData() {
     const saved = await loadPersistedData();
     return mergeData(saved);
   },
   async setSiteData(data) {
-    await savePersistedData(data);
+    const ok = await savePersistedData(data);
     Object.assign(siteData, mergeData(data));
     renderAll();
+    return ok;
   }
 };

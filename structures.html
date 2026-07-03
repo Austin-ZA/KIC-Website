@@ -30,14 +30,14 @@
         return;
       }
       container.innerHTML = structures.map(s => `
-        <section style="margin-bottom:1.25rem;padding:1rem;border-radius:12px;background:rgba(255,255,255,0.03);">
-          <h2 style="margin:0 0 0.5rem">${s.name}</h2>
-          <div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
-            <div style="flex:0 0 360px;">
-              ${s.image ? `<img src="${s.image}" alt="${s.name}" style="width:100%;border-radius:8px;display:block;" />` : ''}
+        <section class="structure-block">
+          <h2>${s.name}</h2>
+          <div class="structure-body">
+            <div class="structure-img-wrap">
+              ${s.image ? `<img src="${s.image}" alt="${s.name}" />` : ''}
             </div>
-            <div style="flex:1 1 320px;display:flex;flex-direction:column;justify-content:flex-start;">
-              ${(s.members||[]).map(m => `<div style="margin-bottom:0.6rem;display:flex;gap:0.6rem;align-items:baseline;"><strong style="min-width:180px;">${m.name}</strong><span style="color:rgba(255,255,255,0.78)">${m.role||'Member'}</span></div>`).join('')}
+            <div class="structure-members">
+              ${(s.members||[]).map(m => `<div class="structure-member-row"><strong>${m.name}</strong><span>${m.role||'Member'}</span></div>`).join('')}
             </div>
           </div>
         </section>
