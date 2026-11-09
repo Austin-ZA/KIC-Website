@@ -294,15 +294,19 @@ function mergeData(saved) {
   })) : [];
 
   const structures = (() => {
-    const merged = savedStructures.length ? savedStructures.slice() : [];
-    defaultStructures.forEach((d) => {
-      if (!merged.some((s) => canonicalizeStructureName(s.name) === canonicalizeStructureName(d.name))) {
-        merged.push(d);
-      }
+    const repoByName = new Map();
+    defaultStructures.forEach((item) => repoByName.set(canonicalizeStructureName(item.name), item));
+
+    const merged = defaultStructures.slice();
+    savedStructures.forEach((savedItem) => {
+      const canonical = canonicalizeStructureName(savedItem.name);
+      if (!canonical || repoByName.has(canonical)) return;
+      merged.push(savedItem);
     });
-    return (merged.length ? merged : defaultStructures.slice()).filter((structure, index, array) => {
-      const name = canonicalizeStructureName(structure.name);
-      return array.findIndex((item) => canonicalizeStructureName(item.name) === name) === index;
+
+    return merged.filter((structure, index, array) => {
+      const canonical = canonicalizeStructureName(structure.name);
+      return canonical && array.findIndex((item) => canonicalizeStructureName(item.name) === canonical) === index;
     });
   })();
 

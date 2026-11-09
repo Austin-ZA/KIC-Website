@@ -46,6 +46,15 @@ assert.ok(defaultData.structures.some((item) => item.name === "Men's Ministry"),
 const mergedStructures = mergeData(null).structures.map((item) => item.name);
 assert.equal(mergedStructures.filter((name) => name === 'Announcements Team' || name === 'Announcement Team').length, 1, 'announcement team should be deduplicated across singular/plural names');
 
+const canonicalStructureData = mergeData({
+  structures: [
+    { name: 'Media Team', image: 'legacy/media.jpg', members: [{ name: 'Old Member', role: 'Old Role' }] },
+    { name: 'Announcements Team', image: 'legacy/announcements.jpg', members: [{ name: 'Old Announcer', role: 'Old Role' }] }
+  ]
+}).structures;
+assert.equal(canonicalStructureData.find((item) => item.name === 'Media Team')?.image, 'images/Media Team.jpg', 'repo structure data should override stale saved values');
+assert.equal(canonicalStructureData.find((item) => item.name === 'Announcements Team')?.members.length > 0, true, 'default roster should remain intact even when saved data is stale');
+
 const expiredAnnouncements = sanitizeAnnouncements([
   { title: 'Old event', date: '2020-01-01', body: 'Past event' },
   { title: 'Current event', date: '2099-12-31', body: 'Future event' }
