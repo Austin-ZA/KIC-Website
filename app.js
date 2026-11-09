@@ -77,6 +77,95 @@ async function savePersistedData(data) {
 }
 
 // ─── Default content ──────────────────────────────────────────────────────────
+function normalizeText(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function canonicalizeStructureName(value) {
+  const text = normalizeText(String(value || '')).toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  if (!text) return '';
+
+  const words = text.split(/\s+/).map((word) => {
+    if (word.length <= 3 || word.endsWith('ss')) return word;
+    if (word.endsWith('ies') && word.length > 4) return word.slice(0, -3) + 'y';
+    if (word.endsWith('sses')) return word.slice(0, -2);
+    if (word.endsWith('ches') || word.endsWith('shes') || word.endsWith('xes') || word.endsWith('zes')) return word.slice(0, -2);
+    if (word.endsWith('s') && !word.endsWith('ss')) return word.slice(0, -1);
+    return word;
+  });
+
+  return words.join(' ');
+}
+
+function parseSpecificDate(value) {
+  if (!value || typeof value !== 'string') return null;
+  const raw = value.trim();
+  if (!raw) return null;
+  const cleaned = raw.replace(/\s+(?:at|by)\s+.*$/i, '').trim();
+
+  const iso = cleaned.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):?(\d{2})?)?/i);
+  if (iso) {
+    const [, year, month, day, hour = '0', minute = '0'] = iso;
+    const date = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute));
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  const parsed = new Date(cleaned);
+  if (!Number.isNaN(parsed.getTime())) return parsed;
+  return null;
+}
+
+function isAnnouncementExpired(item) {
+  if (!item || typeof item !== 'object') return false;
+  const rawDate = normalizeText(item.date);
+  if (!rawDate) return false;
+
+  const lower = rawDate.toLowerCase();
+  if (/^(this|next|every|weekly|daily|today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(lower)) {
+    return false;
+  }
+
+  const date = parseSpecificDate(rawDate);
+  if (!date) return false;
+
+  const today = new Date();
+  date.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  return date < today;
+}
+
+function sanitizeAnnouncements(list) {
+  if (!Array.isArray(list)) return [];
+  return list.filter((item) => item && !isAnnouncementExpired(item));
+}
+
+function normalizeStructureMembers(rawMembers) {
+  const entries = Array.isArray(rawMembers) ? rawMembers : typeof rawMembers === 'string' ? rawMembers.split(/\r?\n/) : [];
+  const list = [];
+
+  entries.forEach((entry) => {
+    if (entry && typeof entry === 'object' && entry.name) {
+      const name = normalizeText(entry.name);
+      const role = normalizeText(entry.role) || 'Member';
+      if (name) list.push({ name, role });
+      return;
+    }
+
+    const text = normalizeText(String(entry || ''));
+    if (!text) return;
+
+    const splitPattern = /\s*(?:[-—|:]\s*)/;
+    const parts = text.split(splitPattern);
+    const name = normalizeText(parts[0]);
+    if (!name) return;
+
+    const role = normalizeText(parts.slice(1).join(' ')) || 'Member';
+    list.push({ name, role });
+  });
+
+  return list;
+}
+
 const defaultData = {
   announcements: [
     { title: 'Kingdom Conference Launch', body: 'Join the church family for a week of worship, teaching and fellowship. Doors open at 08:30 Sunday.', category: 'Service', date: 'This week', image: '' },
@@ -105,15 +194,75 @@ const defaultData = {
   ],
   gallery: [],
   structures: [
-    { name: 'Visionary Leaders', image: '', members: [{ name: 'Pastor T.G NDALA', role: 'Lead Pastor' }, { name: 'Elder Mary', role: 'Assistant Pastor' }] },
-    { name: 'Ministers', image: '', members: [{ name: 'Sis Joy', role: 'Minister' }, { name: 'Bro Mike', role: 'Minister' }] },
-    { name: 'Executive Team', image: '', members: [{ name: 'Steve', role: 'Operations' }, { name: 'June', role: 'Finance' }] },
-    { name: 'Media Team', image: '', members: [{ name: 'Tebo', role: 'Production' }, { name: 'Zandi', role: 'Social Media' }] },
-    { name: 'Worship Team', image: 'WorshipTeam.jpeg', members: [{ name: 'Pastor Gift', role: 'Worship Leader' }, { name: 'Choir', role: 'Vocal Team' }] },
-    { name: 'Ushers', image: '', members: [{ name: 'Samuel', role: 'Head Usher' }, { name: 'Leah', role: 'Usher' }] },
-    { name: 'Intercessors', image: '', members: [{ name: 'Nandi', role: 'Head Intercessor' }, { name: 'Moses', role: 'Intercessor' }] },
-    { name: 'Announcement Team', image: '', members: [{ name: 'TBC', role: 'Team Lead' }] },
-    { name: 'Couples Connect', image: '', members: [{ name: 'TBC', role: 'Team Lead' }] }
+    { name: 'Visionary Leaders', image: '', members: [{ name: 'Thato Ndala', role: 'Lead Pastor' }, { name: 'Wendy Ndala', role: 'Co-Leader' }] },
+    { name: 'Ministers', image: 'images/Ministers.jpg', members: [
+      { name: 'Sizwe Muleya', role: 'Minister' },
+      { name: 'Cole Matjeke', role: 'Minister' },
+      { name: 'Siyabonga Mahlangu', role: 'Minister' },
+      { name: 'Namhla Thole', role: 'Minister' },
+      { name: 'Thato Masuka', role: 'Minister' },
+      { name: 'Thomas Mpofu', role: 'Minister' },
+      { name: 'Prudence Hletha', role: 'Minister' },
+      { name: 'Basetsana Keohitlhetse', role: 'Minister' },
+      { name: 'Esethu Bera', role: 'Minister' },
+      { name: 'Dion Pila', role: 'Minister' }
+    ] },
+    { name: 'Worship Team', image: 'images/WorshipTeam.jpg', members: [
+      { name: 'Tshegofatso Mafalo', role: 'Structure Leader' },
+      { name: 'Faithful Mathayo', role: 'Member' },
+      { name: 'Lisedi Matjie', role: 'Member' },
+      { name: 'Oratile Mampo', role: 'Member' },
+      { name: 'Providence Mbhombi', role: 'Member' },
+      { name: 'Vutivi Rikhotso', role: 'Member' },
+      { name: 'Nhlulo Baloyi', role: 'Member' },
+      { name: 'Refilwe Langa', role: 'Member' },
+      { name: 'Faith Mathayo', role: 'Member' },
+      { name: 'Sidumisile Lubisi', role: 'Member' },
+      { name: 'Nomonde Dladla', role: 'Member' },
+      { name: 'Thembelihle Ngomane', role: 'Member' },
+      { name: 'Mkosazana Mbatha', role: 'Member' },
+      { name: 'Anneka Mahubja', role: 'Member' },
+      { name: 'Mthokozisi Ndlondlo', role: 'Member' },
+      { name: 'Risima Maswanganyi', role: 'Member' }
+    ] },
+    { name: 'Media Team', image: 'images/Media Team.jpg', members: [
+      { name: 'Nokwanda Thani', role: 'Structure Leader' },
+      { name: 'Thomas Mpofu', role: 'Member' },
+      { name: 'Kgahliso Mokobake', role: 'Member' },
+      { name: 'Abigail Rasetsoke', role: 'Member' },
+      { name: 'Jessicah Tsie', role: 'Member' },
+      { name: 'Thoriso Modise', role: 'Member' },
+      { name: 'Tsholofhelo Namane', role: 'Member' },
+      { name: 'Nkosazana Mbatha', role: 'Member' },
+      { name: 'Ndzalo Mobbie', role: 'Member' }
+    ] },
+    { name: 'Ushers', image: 'images/Ushers.jpg', members: [
+      { name: 'Siphokazi Buthelezi', role: 'Usher' },
+      { name: 'Lihle Khumalo', role: 'Usher' },
+      { name: 'Mcondisi Nkosi', role: 'Usher' },
+      { name: 'Senamile Mkhonto', role: 'Usher' },
+      { name: 'Lebogang Kgole', role: 'Usher' }
+    ] },
+    { name: 'Announcements Team', image: 'images/Announcement team.jpg', members: [
+      { name: 'Nokwanda Thani', role: 'Structure Leader' },
+      { name: 'Bokamoso Kubyana', role: 'Member' },
+      { name: 'Sbonile Sibiya', role: 'Member' },
+      { name: 'Lebogang Kgole', role: 'Member' }
+    ] },
+    { name: 'Intercessors', image: '', members: [
+      { name: 'Seipati Masha', role: 'Intercessor' },
+      { name: 'Glad Chikana', role: 'Intercessor' },
+      { name: 'Pertunia Hleta', role: 'Intercessor' },
+      { name: 'Sidumisile Lubisi', role: 'Intercessor' },
+      { name: 'Andiswa Mathiso', role: 'Intercessor' }
+    ] },
+    { name: 'Couples Connect', image: 'images/Couples Connect.jpg', members: [
+      { name: 'Jones', role: 'Leader' },
+      { name: 'Bokamoso Kubyana', role: 'Leader' }
+    ] },
+    { name: "Men's Ministry", image: 'images/Men\'s Ministry.jpg', members: [] },
+    { name: 'Executive Team', image: 'images/Executive Team.jpg', members: [] },
+    { name: 'Media Team', image: 'images/Media Team.jpg', members: [] }
   ],
   calendar: { month: '', events: [] },
   giving: {
@@ -129,19 +278,43 @@ const defaultData = {
 // ─── Merge saved + defaults ───────────────────────────────────────────────────
 function mergeData(saved) {
   saved = saved || {};
+
+  const defaultAnnouncements = sanitizeAnnouncements(defaultData.announcements);
+  const savedAnnouncements = sanitizeAnnouncements(Array.isArray(saved.announcements) ? saved.announcements : []);
+  const announcements = savedAnnouncements.length ? savedAnnouncements : defaultAnnouncements;
+
+  const defaultStructures = defaultData.structures.map((structure) => ({
+    ...structure,
+    members: normalizeStructureMembers(structure.members)
+  }));
+
+  const savedStructures = Array.isArray(saved.structures) ? saved.structures.map((structure) => ({
+    ...structure,
+    members: normalizeStructureMembers(structure.members)
+  })) : [];
+
+  const structures = (() => {
+    const merged = savedStructures.length ? savedStructures.slice() : [];
+    defaultStructures.forEach((d) => {
+      if (!merged.some((s) => canonicalizeStructureName(s.name) === canonicalizeStructureName(d.name))) {
+        merged.push(d);
+      }
+    });
+    return (merged.length ? merged : defaultStructures.slice()).filter((structure, index, array) => {
+      const name = canonicalizeStructureName(structure.name);
+      return array.findIndex((item) => canonicalizeStructureName(item.name) === name) === index;
+    });
+  })();
+
   return {
-    announcements: Array.isArray(saved.announcements) && saved.announcements.length ? saved.announcements : defaultData.announcements,
+    announcements,
     sermons:       Array.isArray(saved.sermons) && saved.sermons.length ? saved.sermons : defaultData.sermons,
     contact:       { ...defaultData.contact, ...(saved.contact || {}) },
     countdown:     { ...defaultData.countdown, ...(saved.countdown || {}) },
     songs:         Array.isArray(saved.songs) ? saved.songs : defaultData.songs,
     events:        Array.isArray(saved.events) && saved.events.length ? saved.events : defaultData.events,
     gallery:       Array.isArray(saved.gallery) ? saved.gallery : defaultData.gallery,
-    structures: (function () {
-      const savedList = Array.isArray(saved.structures) && saved.structures.length ? saved.structures.slice() : [];
-      defaultData.structures.forEach((d) => { if (!savedList.find((s) => s.name === d.name)) savedList.push(d); });
-      return savedList.length ? savedList : defaultData.structures.slice();
-    })(),
+    structures,
     calendar: { ...defaultData.calendar, ...(saved.calendar || {}) },
     giving:   { tithe: { ...defaultData.giving.tithe, ...(saved.giving?.tithe || {}) }, offering: { ...defaultData.giving.offering, ...(saved.giving?.offering || {}) } },
     services: {
@@ -163,20 +336,21 @@ async function initSiteData() {
 // ─── Render functions ─────────────────────────────────────────────────────────
 
 function renderFeaturedAnnouncement() {
-  const featured = siteData.announcements[0] || {};
+  const announcements = sanitizeAnnouncements(siteData.announcements);
+  const featured = announcements[0] || {};
   const el = (id) => document.getElementById(id);
   if (el('featuredTitle'))    el('featuredTitle').textContent    = featured.title    || 'Latest church announcement';
   if (el('featuredSummary'))  el('featuredSummary').textContent  = featured.body     || '';
   if (el('featuredDate'))     el('featuredDate').textContent     = featured.date     || 'This week';
   if (el('featuredCategory')) el('featuredCategory').textContent = featured.category ? `${featured.category} · News` : 'News';
   const img = el('featuredImage');
-  if (img) { img.src = featured.image || 'announcement-feature.jpg'; img.style.display = ''; }
+  if (img) { img.src = featured.image || 'announcement-feature.svg'; img.style.display = ''; }
 }
 
 function renderAnnouncements() {
   const grid = document.getElementById('announcementGrid');
   if (!grid) return;
-  const items = siteData.announcements.slice(0, 6);
+  const items = sanitizeAnnouncements(siteData.announcements).slice(0, 6);
   if (!items.length) { grid.innerHTML = '<div class="announcement-card"><p>No announcements available right now.</p></div>'; return; }
   grid.innerHTML = items.map((item) => `
     <article class="announcement-card searchable-item">
@@ -388,7 +562,7 @@ function selectStructure(name) {
       <div class="members-grid">
         ${(structure.members || []).map((m) => `
           <div class="member-card">
-            <img src="member-placeholder.jpg" alt="${m.name}" onerror="this.style.display='none'" />
+            <img src="member-placeholder.svg" alt="${m.name}" onerror="this.style.display='none'" />
             <div><strong>${m.name}</strong><p>${m.role || 'Member'}</p></div>
           </div>`).join('')}
       </div>
@@ -410,24 +584,37 @@ function renderAll() {
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
-initSiteData();
+if (typeof document !== 'undefined') {
+  initSiteData();
+}
 
 // ─── Admin-side exports (used by admin.html) ──────────────────────────────────
-window.KIC = {
-  loadPersistedData,
-  savePersistedData,
-  mergeData,
-  defaultData,
-  get siteData() { return siteData; },
-  get lastSaveError() { return _lastWriteError; },
-  async getSiteData() {
-    const saved = await loadPersistedData();
-    return mergeData(saved);
-  },
-  async setSiteData(data) {
-    const ok = await savePersistedData(data);
-    Object.assign(siteData, mergeData(data));
-    renderAll();
-    return ok;
-  }
-};
+if (typeof window !== 'undefined') {
+  window.KIC = {
+    loadPersistedData,
+    savePersistedData,
+    mergeData,
+    defaultData,
+    sanitizeAnnouncements,
+    normalizeStructureMembers,
+    get siteData() { return siteData; },
+    get lastSaveError() { return _lastWriteError; },
+    async getSiteData() {
+      const saved = await loadPersistedData();
+      return mergeData(saved);
+    },
+    async setSiteData(data) {
+      const ok = await savePersistedData(data);
+      Object.assign(siteData, mergeData(data));
+      if (typeof document !== 'undefined') renderAll();
+      return ok;
+    }
+  };
+}
+
+if (typeof globalThis !== 'undefined') {
+  globalThis.mergeData = mergeData;
+  globalThis.defaultData = defaultData;
+  globalThis.sanitizeAnnouncements = sanitizeAnnouncements;
+  globalThis.normalizeStructureMembers = normalizeStructureMembers;
+}

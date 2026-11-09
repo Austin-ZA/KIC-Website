@@ -754,18 +754,36 @@
     const origName = document.getElementById('structureSelect').value;
     const name = document.getElementById('structureName').value.trim();
     if (!name) { toast('⚠ Name required'); return; }
+
     const uploaded = await readFile(document.getElementById('structureImageFile'));
     const urlVal   = document.getElementById('structureImageUrl').value.trim();
-    const members  = document.getElementById('structureMembers').value.trim().split('\n').map(l => { const [n, r] = l.split(' - '); return { name:(n||'').trim(), role:(r||'Member').trim() }; }).filter(m => m.name);
+    const members  = (document.getElementById('structureMembers').value || '')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const separator = line.match(/\s*(?:[-—|:]\s*|\s\|\s)/);
+        const index = separator ? separator.index : -1;
+        if (index === -1) return { name: line, role: 'Member' };
+        const namePart = line.slice(0, index).trim();
+        const rolePart = line.slice(index + (separator[0].length || 0)).trim();
+        return { name: namePart || line, role: rolePart || 'Member' };
+      })
+      .filter((member) => member.name);
+
     const d = await window.KIC.getSiteData();
-    const idx = d.structures.findIndex(s => s.name === origName);
-    const updated = { name, image: uploaded || urlVal || '', members };
+    const existing = d.structures.find((s) => s.name === origName) || d.structures.find((s) => s.name === name) || {};
+    const idx = d.structures.findIndex((s) => s.name === origName);
+    const updated = { name, image: uploaded || urlVal || existing.image || '', members };
     if (idx >= 0) d.structures[idx] = updated; else d.structures.push(updated);
+
     await persistData(d);
     document.getElementById('structureImageFile').value = '';
+    document.getElementById('structureImgPreview').innerHTML = updated.image ? `<img src="${updated.image}" style="max-width:260px;border-radius:8px;margin-top:0.5rem;border:1px solid rgba(255,255,255,0.1)"/>` : '';
     toast('✓ Structure saved — visible on all devices');
     renderStructureSelect(d);
     document.getElementById('structureSelect').value = name;
+    loadStructureDetails();
   }
 
   // ── CALENDAR ──
